@@ -1,66 +1,247 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::VecDeque, fs, path::Path, vec};
 
 #[allow(dead_code)]
-fn exec1(input: &[usize], times: usize) -> String {
-    fn count_digits(mut stone: usize) -> usize {
-        if stone == 0 {
-            return 1;
-        }
-        let mut res = 0;
-        while stone > 0 {
-            res += 1;
-            stone /= 10;
-        }
-        res
-    }
+fn exec1(input: &[&[u8]]) -> String {
+    let row = input.len();
+    let col = input[0].len();
+    let mut visited = vec![vec![false; col]; row];
 
-    fn blink(stone: usize, times: usize, cache: &mut HashMap<(usize, usize), usize>) -> usize {
-        if times == 0 {
-            return 1;
-        }
-        if let Some(v) = cache.get(&(stone, times)) {
-            return *v;
-        }
-        let mut res = 0usize;
-        if stone == 0 {
-            res += blink(1, times - 1, cache);
-        } else {
-            let n_digits = count_digits(stone);
-            if n_digits % 2 == 0 {
-                let n = 10usize.pow((n_digits / 2) as u32);
-                res += blink(stone / n, times - 1, cache);
-                res += blink(stone % n, times - 1, cache);
+    macro_rules! visit {
+        ($x:expr, $y:expr) => {
+            if $x < 0 || $x >= row as i32 || $y < 0 || $y >= col as i32 {
+                true
             } else {
-                res += blink(stone * 2024, times - 1, cache);
+                let ret = visited[$x as usize][$y as usize];
+                visited[$x as usize][$y as usize] = true;
+                ret
             }
-        }
-
-        cache.insert((stone, times), res);
-
-        res
+        };
     }
 
-    // 缓存一个数在k轮后的数量
-    let mut cache = HashMap::new();
-    let mut res = 0;
-    for stone in input {
-        res += blink(*stone, times, &mut cache)
+    macro_rules! is_same {
+        ($x:expr, $y:expr, $v:expr) => {
+            if $x < 0 || $x >= row as i32 || $y < 0 || $y >= col as i32 {
+                false
+            } else {
+                input[$x as usize][$y as usize] == $v
+            }
+        };
+    }
+
+    let mut res = 0usize;
+    for i in 0..row {
+        for j in 0..col {
+            if visited[i][j] {
+                continue;
+            }
+            let mut area = 0usize;
+            let mut perimeter = 0isize;
+            let this = input[i as usize][j as usize];
+            let (i, j) = (i as i32, j as i32);
+            let mut q = VecDeque::new();
+            q.push_back((i, j));
+            while let Some((i, j)) = q.pop_front() {
+                if visit!(i, j) {
+                    continue;
+                }
+                // dbg!((i, j));
+                let mut adj = 0;
+                for (di, dj) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                    let i = i + di;
+                    let j = j + dj;
+                    if is_same!(i, j, this) {
+                        if visited[i as usize][j as usize] {
+                            adj += 1;
+                        } else {
+                            q.push_back((i, j));
+                        }
+                    }
+                }
+                area += 1;
+                perimeter += 4 - 2 * adj as isize;
+            }
+            // dbg!(this, area, perimeter);
+            res += area * perimeter as usize;
+        }
     }
 
     res.to_string()
 }
 
+fn exec2(input: &[&[u8]]) -> String {
+    let row = input.len();
+    let col = input[0].len();
+    let mut color = vec![vec![0; col]; row];
+
+    // 先为区域染色，然后遍历所有行列找到所有边，乘以对应染色的面积
+    let mut idx = 1usize;
+    let mut areas = vec![0];
+    for i in 0..row {
+        for j in 0..col {
+            if color[i][j] != 0 {
+                continue;
+            }
+            let mut area = 0usize;
+            let this = input[i as usize][j as usize];
+            let (i, j) = (i as i32, j as i32);
+            let mut q = VecDeque::new();
+            q.push_back((i, j));
+            while let Some((i, j)) = q.pop_back() {
+                if i < 0 || i >= row as i32 || j < 0 || j >= col as i32 {
+                    continue;
+                }
+                if color[i as usize][j as usize] != 0 {
+                    continue;
+                }
+                if input[i as usize][j as usize] != this {
+                    continue;
+                }
+                area += 1;
+                color[i as usize][j as usize] = idx;
+                for (di, dj) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                    q.push_back((i + di, j + dj));
+                }
+            }
+            areas.push(area);
+            idx += 1;
+        }
+    }
+
+    macro_rules! color_of {
+        ($i:expr, $j:expr) => {
+            if $i < 0 || $i >= row as i32 || $j < 0 || $j >= col as i32 {
+                0
+            } else {
+                color[$i as usize][$j as usize]
+            }
+        };
+    }
+
+    // 染色完毕，遍历所有边
+    let mut res = 0usize;
+    #[derive(Debug, Clone, Copy)]
+    struct Edge {
+        color: usize,
+        len: usize,
+    }
+    // let mut edge_cnt = areas.clone();
+    // for cnt in &mut edge_cnt {
+    //     *cnt = 0;
+    // }
+    for i in 0..row as i32 + 1 {
+        // 这里的len仅用于标记是否是边
+        let mut edges = vec![Edge { color: 0, len: 0 }; 2];
+        for d in [0, 1] {
+            edges[d] = Edge {
+                color: color_of!(i - d as i32, 0),
+                len: 1,
+            }
+        }
+        if edges[0].color == edges[1].color {
+            (edges[0].len, edges[1].len) = (0, 0);
+        }
+
+        for j in 1..col as i32 + 1 {
+            let mut next_edges = edges.clone();
+            for d in [0, 1] {
+                next_edges[d].color = color_of!(i - d as i32, j);
+            }
+            for d in [0, 1] {
+                if next_edges[0].color == next_edges[1].color
+                    || next_edges[d].color != edges[d].color
+                {
+                    // 边结束
+                    // res += areas[edges[d].color] * edges[d].len;
+                    if edges[d].len > 0 {
+                        res += areas[edges[d].color];
+                        // edge_cnt[edges[d].color] += 1;
+                    }
+                    next_edges[d].len = if next_edges[0].color == next_edges[1].color {
+                        0
+                    } else {
+                        1
+                    };
+                } else {
+                    // 边继续
+                    next_edges[d].len += 1;
+                }
+            }
+            edges = next_edges;
+        }
+    }
+    // 另一个方向，懒得写函数了，复制一遍
+    for j in 0..col as i32 + 1 {
+        // 这里的len仅用于标记是否是边
+        let mut edges = vec![Edge { color: 0, len: 0 }; 2];
+        for d in [0, 1] {
+            edges[d] = Edge {
+                color: color_of!(0, j - d as i32),
+                len: 1,
+            }
+        }
+        if edges[0].color == edges[1].color {
+            (edges[0].len, edges[1].len) = (0, 0);
+        }
+
+        for i in 1..row as i32 + 1 {
+            let mut next_edges = edges.clone();
+            for d in [0, 1] {
+                next_edges[d].color = color_of!(i, j - d as i32);
+            }
+            for d in [0, 1] {
+                if next_edges[0].color == next_edges[1].color
+                    || next_edges[d].color != edges[d].color
+                {
+                    // 边结束
+                    // res += areas[edges[d].color] * edges[d].len;
+                    if edges[d].len > 0 {
+                        res += areas[edges[d].color];
+                        // edge_cnt[edges[d].color] += 1;
+                    }
+                    next_edges[d].len = if next_edges[0].color == next_edges[1].color {
+                        0
+                    } else {
+                        1
+                    };
+                } else {
+                    // 边继续
+                    next_edges[d].len += 1;
+                }
+            }
+            edges = next_edges;
+        }
+    }
+    // dbg!(edge_cnt);
+    // dbg!(areas);
+
+    res.to_string()
+}
+
 fn main() {
-    let input = vec![125, 17];
+    //     let input = r"AAAAAA
+    // AAABBA
+    // AAABBA
+    // ABBAAA
+    // ABBAAA
+    // AAAAAA";
+    //     let input = r"RRRRIICCFF
+    // RRRRIICCCF
+    // VVRRRCCFFF
+    // VVRCCCJFFF
+    // VVVVCJJCFE
+    // VVIVCCJJEE
+    // VVIIICJJEE
+    // MIIIIIJJEE
+    // MIIISIJEEE
+    // MMMISSJEEE";
+    let file = Path::new("data/2412/input");
+    let input = fs::read_to_string(file).unwrap();
 
-    // let file = Path::new("data/2412/input");
-    // let input = fs::read_to_string(file).unwrap();
-    // let input = input
-    //     .split(" ")
-    //     .into_iter()
-    //     .map(|s| s.parse().unwrap())
-    //     .collect::<Vec<_>>();
+    let input = input
+        .lines()
+        .into_iter()
+        .map(|s| s.as_bytes())
+        .collect::<Vec<_>>();
 
-    let times = 75;
-    println!("{:?}", exec1(&input, times))
+    println!("{:?}", exec2(&input));
 }
