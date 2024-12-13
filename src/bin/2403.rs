@@ -161,6 +161,7 @@ fn exec2(input: &str) -> String {
 
     res.to_string()
 }
+
 #[allow(unused_variables)]
 fn main() {
     let name = module_path!().split("::").last().unwrap();
