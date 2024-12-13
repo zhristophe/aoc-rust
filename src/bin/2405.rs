@@ -1,38 +1,68 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, vec};
 
 #[allow(dead_code)]
 fn exec1(input: &(Vec<Vec<i32>>, Vec<Vec<i32>>)) -> String {
-    // 原汁原味的拓扑排序啊
-    // 所有输入都是两位数，不需要哈希
-    let mut f = vec![-1; 100];
+    let len = 100;
+    let mut map = vec![Vec::new(); len];
     for i in 0..input.0.len() {
-        for j in [0, 1] {
-            if f[input.0[i][j] as usize] == -1 {
-                f[input.0[i][j] as usize] = 0;
-            }
-        }
-        f[input.0[i][1] as usize] += 1;
+        map[input.0[i][0] as usize].push(input.0[i][1]);
     }
-    let mut top = Vec::new();
-    top.reserve(100);
-    loop {
-        let mut new_f = f.clone();
-        for i in 0..100 {
-            if f[i] == 0 {
-                top.push(i as i32);
-                // for (i, j, _) in input.1 {}
-            } else {
-                new_f[i] -= 1;
+    let mut res = 0;
+    'main: for input in &input.1 {
+        for i in (0..input.len()).rev() {
+            for j in &map[input[i] as usize] {
+                if input[..i].contains(j) {
+                    println!("不正确");
+                    continue 'main;
+                }
             }
         }
-        f = new_f;
+        res += input[input.len() / 2];
     }
 
-    0.to_string()
+    res.to_string()
 }
 
+#[allow(dead_code)]
 fn exec2(input: &(Vec<Vec<i32>>, Vec<Vec<i32>>)) -> String {
-    0.to_string()
+    // 陷阱：排序规则含有循环，离谱
+    // 因此拓扑排序每次都要重排，放弃
+    let len = 100;
+    let mut map = vec![Vec::new(); len];
+    for i in 0..input.0.len() {
+        map[input.0[i][0] as usize].push(input.0[i][1]);
+    }
+    let mut res = 0;
+    for input in &input.1 {
+        let is_wrong = 'is_wrong: loop {
+            for i in (0..input.len()).rev() {
+                for j in &map[input[i] as usize] {
+                    if input[..i].contains(j) {
+                        break 'is_wrong true;
+                    }
+                }
+            }
+            break false;
+        };
+        if !is_wrong {
+            continue;
+        }
+
+        let mut input = input.clone();
+        input.sort_by(|a, b| {
+            if map[*a as usize].contains(b) {
+                std::cmp::Ordering::Less
+            } else if map[*b as usize].contains(a) {
+                std::cmp::Ordering::Greater
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        });
+
+        res += input[input.len() / 2];
+    }
+
+    res.to_string()
 }
 
 #[allow(unused_variables)]
@@ -69,7 +99,7 @@ fn main() {
 75,97,47,61,53
 61,13,29
 97,13,75,29,47";
-    // let input = fs::read_to_string(file).unwrap();
+    let input = fs::read_to_string(file).unwrap();
 
     let input = input.split_once("\n\n").unwrap();
     let input0 = input
@@ -84,5 +114,5 @@ fn main() {
         .collect();
     let input = (input0, input1);
 
-    println!("{:?}", exec1(&input));
+    println!("{:?}", exec2(&input));
 }
