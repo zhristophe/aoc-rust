@@ -32,16 +32,6 @@ fn exec2(input: Vec<(usize, Vec<usize>)>) -> String {
     let mut res = 0;
     for (tgt, opds) in input {
         fn concat(a: usize, b: usize) -> usize {
-            // let mut digits = Vec::new();
-            // digits.reserve(32);
-            // while b > 0 {
-            //     digits.push(b % 10);
-            //     b /= 10;
-            // }
-            // for digit in digits.iter().rev() {
-            //     a = a * 10 + digit;
-            // }
-            // a
             (a.to_string() + &b.to_string()).parse().unwrap()
         }
 
@@ -50,8 +40,6 @@ fn exec2(input: Vec<(usize, Vec<usize>)>) -> String {
             if idx == opds.len() {
                 return num == tgt;
             }
-            // 为什么加上等号会出错？？？
-            // if num >= tgt {
             if num > tgt {
                 return false;
             }

@@ -1,3 +1,5 @@
+use std::ops::{Add, Mul, Sub};
+
 use crossterm::{
     cursor,
     event::{read, Event, KeyCode, KeyEvent},
@@ -49,6 +51,14 @@ impl<T> Map<T> {
         }
     }
 
+    pub fn row_len(&self) -> usize {
+        self.inner.len()
+    }
+
+    pub fn col_len(&self) -> usize {
+        self.inner[0].len()
+    }
+
     pub fn from(inner: Vec<Vec<T>>) -> Self {
         Map { inner }
     }
@@ -74,7 +84,7 @@ impl<T> Map<T> {
     pub fn points(&self) -> MapIter<T> {
         MapIter {
             row: 0,
-            col: 0,
+            col: -1,
             map: self,
         }
     }
@@ -95,6 +105,23 @@ impl<T> Map<T> {
         None
     }
 
+    pub fn find_all_points(&self, c: T) -> Vec<Point>
+    where
+        T: PartialEq<T>,
+    {
+        let mut res = Vec::new();
+        let data = &self.inner;
+        for i in 0..data.len() {
+            for j in 0..data[0].len() {
+                if data[i][j] == c {
+                    res.push(Point::from((i, j)));
+                }
+            }
+        }
+
+        res
+    }
+
     pub fn display_by<F>(&self, f: F)
     where
         F: Fn(&T) -> String,
@@ -110,8 +137,8 @@ impl<T> Map<T> {
 }
 
 pub struct MapIter<'a, T> {
-    row: usize,
-    col: usize,
+    row: isize,
+    col: isize,
     map: &'a Map<T>,
 }
 
@@ -120,15 +147,15 @@ impl<'a, T> Iterator for MapIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.col += 1;
-        if self.col >= self.map.inner[0].len() {
+        if self.col >= self.map.inner[0].len() as isize {
             self.col = 0;
             self.row += 1;
         }
 
-        if self.row == self.map.inner.len() {
+        if self.row == self.map.inner.len() as isize {
             None
         } else {
-            Some(Point::from((self.row, self.col)))
+            Some(Point::new(self.row, self.col))
         }
     }
 }
@@ -193,6 +220,47 @@ impl From<(usize, usize)> for Point {
         Point {
             i: x as isize,
             j: y as isize,
+        }
+    }
+}
+
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Point {
+            i: self.i + rhs.i,
+            j: self.j + rhs.j,
+        }
+    }
+}
+
+impl Sub for Point {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Point {
+            i: self.i - rhs.i,
+            j: self.j - rhs.j,
+        }
+    }
+}
+
+impl Mul for Point {
+    type Output = isize;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.i * rhs.j + self.j * rhs.i
+    }
+}
+
+impl Mul<isize> for Point {
+    type Output = Self;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        Point {
+            i: self.i * rhs,
+            j: self.j * rhs,
         }
     }
 }
