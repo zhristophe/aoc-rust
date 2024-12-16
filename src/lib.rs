@@ -1,13 +1,99 @@
-pub fn display_map<T, F>(map: &Vec<Vec<T>>, f: F)
-where
-    F: Fn(&T) -> char,
-{
-    // print!("\x1B[2J\x1B[1;1H");
-    for i in 0..map.len() {
-        for j in 0..map[0].len() {
-            print!("{}", f(&map[i][j]));
+#[derive(Clone, Debug)]
+pub struct Map<T> {
+    inner: Vec<Vec<T>>,
+}
+
+impl<T> Map<T> {
+    pub fn new(width: usize, height: usize, default: T) -> Self
+    where
+        T: Clone,
+    {
+        Map {
+            inner: vec![vec![default; height]; width],
         }
-        println!();
+    }
+
+    pub fn from(inner: Vec<Vec<T>>) -> Self {
+        Map { inner }
+    }
+
+    pub fn get(&self, index: Point) -> Option<&T> {
+        self.inner.get(index.i as usize)?.get(index.j as usize)
+    }
+
+    pub fn get_mut(&mut self, index: Point) -> Option<&mut T> {
+        self.inner
+            .get_mut(index.i as usize)?
+            .get_mut(index.j as usize)
+    }
+
+    pub fn set(&mut self, index: Point, value: T) {
+        self.get_mut(index).map(|v| *v = value);
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.inner.iter().flatten()
+    }
+
+    pub fn points(&self) -> MapIter<T> {
+        MapIter {
+            row: 0,
+            col: 0,
+            map: self,
+        }
+    }
+
+    pub fn find_point(&self, c: T) -> Option<Point>
+    where
+        T: PartialEq<T>,
+    {
+        let data = &self.inner;
+        for i in 0..data.len() {
+            for j in 0..data[0].len() {
+                if data[i][j] == c {
+                    return Some(Point::from((i, j)));
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn display_by<F>(&self, f: F)
+    where
+        F: Fn(&T) -> String,
+    {
+        // print!("\x1B[2J\x1B[1;1H");
+        for i in 0..self.inner.len() {
+            for j in 0..self.inner[0].len() {
+                print!("{}", f(&self.inner[i][j]));
+            }
+            println!();
+        }
+    }
+}
+
+pub struct MapIter<'a, T> {
+    row: usize,
+    col: usize,
+    map: &'a Map<T>,
+}
+
+impl<'a, T> Iterator for MapIter<'a, T> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.col += 1;
+        if self.col >= self.map.inner[0].len() {
+            self.col = 0;
+            self.row += 1;
+        }
+
+        if self.row == self.map.inner.len() {
+            None
+        } else {
+            Some(Point::from((self.row, self.col)))
+        }
     }
 }
 
@@ -40,10 +126,14 @@ impl Point {
     }
 
     pub fn at<T>(self, map: &Vec<Vec<T>>) -> Option<&T> {
+        self.get(map)
+    }
+
+    pub fn get<T>(self, map: &Vec<Vec<T>>) -> Option<&T> {
         map.get(self.i as usize)?.get(self.j as usize)
     }
 
-    pub fn assign_at<T>(self, map: &mut Vec<Vec<T>>) -> Option<&mut T> {
+    pub fn get_mut<T>(self, map: &mut Vec<Vec<T>>) -> Option<&mut T> {
         map.get_mut(self.i as usize)?.get_mut(self.j as usize)
     }
 
@@ -56,14 +146,6 @@ impl Point {
             map[self.i as usize][self.j as usize] = value;
         }
     }
-
-    pub fn get<T>(self, map: &Vec<Vec<T>>) -> Option<&T> {
-        map.get(self.i as usize)?.get(self.j as usize)
-    }
-
-    pub fn get_mut<T>(self, map: &mut Vec<Vec<T>>) -> Option<&mut T> {
-        map.get_mut(self.i as usize)?.get_mut(self.j as usize)
-    }
 }
 
 impl From<(usize, usize)> for Point {
@@ -75,13 +157,7 @@ impl From<(usize, usize)> for Point {
     }
 }
 
-// impl PartialEq for Point {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.i == other.i && self.j == other.j
-//     }
-// }
-
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Direction {
     Up,
     Down,
@@ -99,7 +175,7 @@ impl Direction {
         ]
     }
 
-    pub fn turn_left(&self) -> Direction {
+    pub fn turn_left(self) -> Direction {
         match self {
             Direction::Up => Direction::Left,
             Direction::Down => Direction::Right,
@@ -108,7 +184,7 @@ impl Direction {
         }
     }
 
-    pub fn turn_right(&self) -> Direction {
+    pub fn turn_right(self) -> Direction {
         match self {
             Direction::Up => Direction::Right,
             Direction::Down => Direction::Left,
@@ -117,13 +193,17 @@ impl Direction {
         }
     }
 
-    pub fn turn_around(&self) -> Direction {
+    pub fn turn_around(self) -> Direction {
         match self {
             Direction::Up => Direction::Down,
             Direction::Down => Direction::Up,
             Direction::Left => Direction::Right,
             Direction::Right => Direction::Left,
         }
+    }
+
+    pub fn at<T>(self, v: &Vec<T>) -> Option<&T> {
+        self.get(v)
     }
 
     pub fn get<T>(self, v: &Vec<T>) -> Option<&T> {
@@ -142,27 +222,5 @@ impl Direction {
             Direction::Left => v[2] = val,
             Direction::Right => v[3] = val,
         };
-    }
-
-    pub fn at<T>(self, v: &Vec<T>) -> Option<&T> {
-        match self {
-            Direction::Up => v.get(0),
-            Direction::Down => v.get(1),
-            Direction::Left => v.get(2),
-            Direction::Right => v.get(3),
-        }
-    }
-
-    pub fn at_mut<T>(self, v: &mut Vec<T>) -> Option<&mut T> {
-        match self {
-            Direction::Up => v.get_mut(0),
-            Direction::Down => v.get_mut(1),
-            Direction::Left => v.get_mut(2),
-            Direction::Right => v.get_mut(3),
-        }
-    }
-
-    pub fn at_opt<T>(self, v: Option<&Vec<T>>) -> Option<&T> {
-        self.at(v?)
     }
 }
