@@ -88,9 +88,6 @@ fn exec2(input: &Vec<Vec<char>>) -> String {
             if input[i][j] == '#' {
                 continue;
             }
-            if (i, j) != (4, 5) {
-                continue;
-            }
 
             let input = {
                 let mut input = input.clone();
@@ -99,17 +96,19 @@ fn exec2(input: &Vec<Vec<char>>) -> String {
             };
             let mut cur = start;
             let mut dir = Direction::Up;
-            let mut visited = vec![vec![false; input[0].len()]; input.len()];
+            // let mut visited = vec![vec![false; input[0].len()]; input.len()];
+            let mut stop = vec![vec![false; input[0].len()]; input.len()];
 
             'search: loop {
                 let mut next = cur.move_to(dir);
                 match next.at(&input) {
                     Some('#') => {
-                        if Some(&true) == cur.at(&visited) {
+                        if Some(&true) == cur.at(&stop) {
                             res += 1;
-                            dbg!(i, j);
+                            // dbg!(i, j);
                             break 'search;
                         }
+                        cur.get_mut(&mut stop).map(|v| *v = true);
                         loop {
                             dir = dir.turn_right();
                             next = cur.move_to(dir);
@@ -129,7 +128,7 @@ fn exec2(input: &Vec<Vec<char>>) -> String {
                         break 'search;
                     }
                 }
-                visited[cur.i as usize][cur.j as usize] = true;
+                // visited[cur.i as usize][cur.j as usize] = true;
                 cur = next;
             }
         }
@@ -156,7 +155,7 @@ fn main() {
 ......#...";
     //     let input = r"..
     // .^";
-    // let input = fs::read_to_string(file).unwrap();
+    let input = fs::read_to_string(file).unwrap();
 
     let input = input.lines().map(|s| s.chars().collect()).collect();
 
