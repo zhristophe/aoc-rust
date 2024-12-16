@@ -1,3 +1,39 @@
+use crossterm::{
+    cursor,
+    event::{read, Event, KeyCode, KeyEvent},
+    execute,
+    terminal::{self, ClearType},
+};
+
+struct Guard<F>(F)
+where
+    F: FnOnce() + Copy;
+
+impl<F> Drop for Guard<F>
+where
+    F: FnOnce() + Copy,
+{
+    fn drop(&mut self) {
+        self.0()
+    }
+}
+
+pub fn wait_key() -> Option<KeyCode> {
+    let _guard = Guard(|| terminal::disable_raw_mode().unwrap());
+
+    terminal::enable_raw_mode().unwrap();
+    if let Event::Key(KeyEvent { code, .. }) = read().unwrap() {
+        Some(code)
+    } else {
+        None
+    }
+}
+
+pub fn clear_screen() {
+    execute!(std::io::stdout(), terminal::Clear(ClearType::All)).unwrap();
+    execute!(std::io::stdout(), cursor::MoveTo(0, 0)).unwrap();
+}
+
 #[derive(Clone, Debug)]
 pub struct Map<T> {
     inner: Vec<Vec<T>>,
@@ -104,6 +140,10 @@ pub struct Point {
 }
 
 impl Point {
+    pub fn new(i: isize, j: isize) -> Self {
+        Point { i, j }
+    }
+
     pub fn move_to(self, direction: Direction) -> Point {
         match direction {
             Direction::Up => Point {

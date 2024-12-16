@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use aoc::Point;
+use aoc::{Map, Point};
 use regex::Regex;
 
 #[derive(Debug, Clone, Copy)]
@@ -65,12 +65,59 @@ fn exec1(input: &Vec<Input>) -> String {
 #[allow(dead_code)]
 fn exec2(input: &Vec<Input>) -> String {
     // What is a Christmas tree in hell???
+    // 从github上淘来的算法，检测圣诞树边框（wtf???）
+    // 我们看看它长什么样子
+    // 原来是要你自己找圣诞树什么样子，好吧
     let max_y = 101;
     let max_x = 103;
 
-    // 8 8 12 35 30
+    let res = 'main: loop {
+        for i in 0.. {
+            let mut map = Map::new(max_y, max_x, 0);
+            for input in input {
+                let p = Point::new(
+                    (input.p.i + i * input.v.i).rem_euclid(max_y as isize),
+                    (input.p.j + i * input.v.j).rem_euclid(max_x as isize),
+                );
+                map.get_mut(p).map(|v| *v += 1);
+                if p.j > 16 {
+                    let tmp = 'inner: loop {
+                        for j in 0..16 {
+                            if *map.get(Point::new(p.i, p.j - j)).unwrap() <= 0 {
+                                break 'inner false;
+                            }
+                        }
+                        break 'inner true;
+                    };
+                    if tmp {
+                        break 'main i;
+                    }
+                }
+            }
+            // let map = get_robot_map(input, i);
+            // clear_screen();
+            // map.display_by(|v| (if *v > 0 { '1' } else { '.' }).to_string());
+            // let _ = wait_key();
+        }
+    };
 
-    0.to_string()
+    get_robot_map(input, res).display_by(|v| (if *v > 0 { '1' } else { '.' }).to_string());
+
+    res.to_string()
+}
+
+fn get_robot_map(input: &Vec<Input>, steps: isize) -> Map<i32> {
+    let max_y = 101;
+    let max_x = 103;
+    let mut map = Map::new(max_y, max_x, 0);
+    for input in input {
+        let mut p = input.p;
+        let v = input.v;
+        p.i += v.i * steps;
+        p.j += v.j * steps;
+        map.get_mut(p).map(|v| *v += 1);
+    }
+    map
 }
 
 #[allow(unused_variables)]
