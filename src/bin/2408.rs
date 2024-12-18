@@ -18,7 +18,7 @@ fn exec1(input: Vec<Vec<char>>) -> String {
             .or_insert(vec![pt]);
     }
 
-    let mut is_node = Map::new(map.row_len(), map.col_len(), false);
+    let mut is_node = Map::new(map.size(), false);
     for (_, ants) in &ant_map {
         for i in 0..ants.len() {
             for j in i + 1..ants.len() {
@@ -56,7 +56,7 @@ fn exec2(input: Vec<Vec<char>>) -> String {
             .or_insert(vec![pt]);
     }
 
-    let mut is_node = Map::new(map.row_len(), map.col_len(), false);
+    let mut is_node = Map::new(map.size(), false);
     for (_, ants) in &ant_map {
         for i in 0..ants.len() {
             for j in i + 1..ants.len() {
@@ -74,16 +74,7 @@ fn exec2(input: Vec<Vec<char>>) -> String {
         }
     }
 
-    is_node.display_by(|c| {
-        {
-            if *c {
-                "#"
-            } else {
-                "."
-            }
-        }
-        .to_string()
-    });
+    is_node.display_by_char(|&c| if c { '#' } else { '.' });
 
     let mut res = 0;
     for pt in is_node.points() {

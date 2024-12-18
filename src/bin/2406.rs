@@ -101,9 +101,9 @@ fn exec2(input: &Vec<Vec<char>>) -> String {
 
             'search: loop {
                 let mut next = cur.move_to(dir);
-                match next.at(&input) {
+                match next.get(&input) {
                     Some('#') => {
-                        if Some(&true) == cur.at(&stop) {
+                        if Some(&true) == cur.get(&stop) {
                             res += 1;
                             // dbg!(i, j);
                             break 'search;
@@ -112,7 +112,7 @@ fn exec2(input: &Vec<Vec<char>>) -> String {
                         loop {
                             dir = dir.turn_right();
                             next = cur.move_to(dir);
-                            match next.at(&input) {
+                            match next.get(&input) {
                                 Some('#') => {
                                     continue;
                                 }

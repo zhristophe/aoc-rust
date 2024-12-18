@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul, Sub};
+use std::{
+    collections::VecDeque,
+    ops::{Add, Mul, Sub},
+};
 
 use crossterm::{
     cursor,
@@ -6,6 +9,8 @@ use crossterm::{
     execute,
     terminal::{self, ClearType},
 };
+
+pub mod prelude;
 
 struct Guard<F>(F)
 where
@@ -42,25 +47,29 @@ pub struct Map<T> {
 }
 
 impl<T> Map<T> {
-    pub fn new(width: usize, height: usize, default: T) -> Self
+    pub fn new(size: (usize, usize), default: T) -> Self
     where
         T: Clone,
     {
         Map {
-            inner: vec![vec![default; height]; width],
+            inner: vec![vec![default; size.1]; size.0],
         }
-    }
-
-    pub fn row_len(&self) -> usize {
-        self.inner.len()
-    }
-
-    pub fn col_len(&self) -> usize {
-        self.inner[0].len()
     }
 
     pub fn from(inner: Vec<Vec<T>>) -> Self {
         Map { inner }
+    }
+
+    pub fn size(&self) -> (usize, usize) {
+        (self.inner.len(), self.inner[0].len())
+    }
+
+    pub fn n_rows(&self) -> usize {
+        self.inner.len()
+    }
+
+    pub fn n_cols(&self) -> usize {
+        self.inner[0].len()
     }
 
     pub fn get(&self, index: Point) -> Option<&T> {
@@ -122,17 +131,136 @@ impl<T> Map<T> {
         res
     }
 
-    pub fn display_by<F>(&self, f: F)
+    pub fn bfs_iter(&self, start: Point) -> BfsIter<T> {
+        BfsIter::new(self, start)
+    }
+
+    pub fn display_by_char<F>(&self, f: F)
     where
-        F: Fn(&T) -> String,
+        F: Fn(&T) -> char,
     {
-        // print!("\x1B[2J\x1B[1;1H");
         for i in 0..self.inner.len() {
             for j in 0..self.inner[0].len() {
                 print!("{}", f(&self.inner[i][j]));
             }
             println!();
         }
+    }
+
+    pub fn display_by_string<F>(&self, f: F)
+    where
+        F: Fn(&T) -> String,
+    {
+        for i in 0..self.inner.len() {
+            for j in 0..self.inner[0].len() {
+                print!("{}", f(&self.inner[i][j]));
+            }
+            println!();
+        }
+    }
+}
+
+pub struct BfsIter<'a, T> {
+    queue: VecDeque<Point>,
+    visited: Map<bool>,
+    map: &'a Map<T>,
+
+    visit_filter: Option<Box<dyn Fn(Point) -> bool + 'a>>,
+    end_condition: Option<Box<dyn Fn(Point) -> bool + 'a>>,
+    update_rule: Option<Box<dyn FnMut(Point, Point) + 'a>>,
+}
+
+impl<'a, T> BfsIter<'a, T> {
+    fn new(map: &'a Map<T>, start: Point) -> Self {
+        BfsIter {
+            queue: VecDeque::from([start]),
+            visited: Map::new(map.size(), false),
+            map,
+
+            visit_filter: None,
+            end_condition: None,
+            update_rule: None,
+        }
+    }
+
+    pub fn with_visit_filter<F>(&mut self, filter: F) -> &mut Self
+    where
+        F: Fn(Point) -> bool + 'a,
+    {
+        self.visit_filter = Some(Box::new(filter));
+        self
+    }
+
+    pub fn with_update_rule<F>(&mut self, rule: F) -> &mut Self
+    where
+        F: FnMut(Point, Point) + 'a,
+    {
+        self.update_rule = Some(Box::new(rule));
+        self
+    }
+
+    pub fn run(&mut self) {
+        while self.next().is_some() {}
+    }
+
+    /// 闭包函数判断点是否是目标
+    pub fn run_with_target<F>(&mut self, target: F) -> bool
+    where
+        F: Fn(Point) -> bool + 'a,
+    {
+        self.end_condition = Some(Box::new(target));
+        while let Some(pt) = self.next() {
+            if let Some(cond) = &self.end_condition {
+                if cond(pt) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    pub fn next_val(&mut self) -> Option<&T> {
+        if let Some(pt) = self.next() {
+            self.map.get(pt)
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a, T> Iterator for BfsIter<'a, T> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(pt) = self.queue.pop_front() {
+            self.visited.set(pt, true);
+
+            for dir in DIRECTIONS {
+                let next_pt = pt + dir;
+                if self.visited.get(next_pt) != Some(&false) {
+                    continue;
+                }
+                if let Some(filter) = &self.visit_filter {
+                    if !filter(next_pt) {
+                        continue;
+                    }
+                }
+                if let Some(update) = &mut self.update_rule {
+                    update(pt, next_pt);
+                }
+                if let Some(cond) = &self.end_condition {
+                    if cond(next_pt) {
+                        self.queue.clear();
+                        return Some(next_pt);
+                    }
+                }
+                if !self.queue.contains(&next_pt) {
+                    self.queue.push_back(next_pt);
+                }
+            }
+            return Some(pt);
+        }
+        None
     }
 }
 
@@ -192,10 +320,6 @@ impl Point {
         }
     }
 
-    pub fn at<T>(self, map: &Vec<Vec<T>>) -> Option<&T> {
-        self.get(map)
-    }
-
     pub fn get<T>(self, map: &Vec<Vec<T>>) -> Option<&T> {
         map.get(self.i as usize)?.get(self.j as usize)
     }
@@ -204,14 +328,9 @@ impl Point {
         map.get_mut(self.i as usize)?.get_mut(self.j as usize)
     }
 
+    /// 超出界限时什么也不做
     pub fn set<T>(self, map: &mut Vec<Vec<T>>, value: T) {
-        if 0 <= self.i
-            && self.i < map.len() as isize
-            && 0 <= self.j
-            && self.j < map[0].len() as isize
-        {
-            map[self.i as usize][self.j as usize] = value;
-        }
+        self.get_mut(map).map(|v| *v = value);
     }
 }
 
@@ -235,6 +354,14 @@ impl Add for Point {
     }
 }
 
+impl Add<Direction> for Point {
+    type Output = Self;
+
+    fn add(self, rhs: Direction) -> Self::Output {
+        self.move_to(rhs)
+    }
+}
+
 impl Sub for Point {
     type Output = Self;
 
@@ -243,6 +370,14 @@ impl Sub for Point {
             i: self.i - rhs.i,
             j: self.j - rhs.j,
         }
+    }
+}
+
+impl Sub<Direction> for Point {
+    type Output = Self;
+
+    fn sub(self, rhs: Direction) -> Self::Output {
+        self.move_to(rhs.turn_around())
     }
 }
 
@@ -265,6 +400,13 @@ impl Mul<isize> for Point {
     }
 }
 
+const DIRECTIONS: [Direction; 4] = [
+    Direction::Up,
+    Direction::Down,
+    Direction::Left,
+    Direction::Right,
+];
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Direction {
     Up,
@@ -275,12 +417,16 @@ pub enum Direction {
 
 impl Direction {
     pub fn all() -> Vec<Direction> {
-        vec![
-            Direction::Up,
-            Direction::Down,
-            Direction::Left,
-            Direction::Right,
-        ]
+        DIRECTIONS.to_vec()
+    }
+
+    pub fn as_pt(self) -> Point {
+        match self {
+            Direction::Up => Point::new(-1, 0),
+            Direction::Down => Point::new(1, 0),
+            Direction::Left => Point::new(0, -1),
+            Direction::Right => Point::new(0, 1),
+        }
     }
 
     pub fn turn_left(self) -> Direction {
@@ -310,10 +456,6 @@ impl Direction {
         }
     }
 
-    pub fn at<T>(self, v: &Vec<T>) -> Option<&T> {
-        self.get(v)
-    }
-
     pub fn get<T>(self, v: &Vec<T>) -> Option<&T> {
         match self {
             Direction::Up => v.get(0),
@@ -330,5 +472,27 @@ impl Direction {
             Direction::Left => v[2] = val,
             Direction::Right => v[3] = val,
         };
+    }
+}
+
+impl Mul<isize> for Direction {
+    type Output = Point;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        self.as_pt() * rhs
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_point() {
+        let p = Point::from((1, 2));
+        assert_eq!(p.move_to(Direction::Up), Point::from((0, 2)));
+        assert_eq!(p.move_to(Direction::Down), Point::from((2, 2)));
+        assert_eq!(p.move_to(Direction::Left), Point::from((1, 1)));
+        assert_eq!(p.move_to(Direction::Right), Point::from((1, 3)));
     }
 }

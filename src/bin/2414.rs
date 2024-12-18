@@ -73,7 +73,7 @@ fn exec2(input: &Vec<Input>) -> String {
 
     let res = 'main: loop {
         for i in 0.. {
-            let mut map = Map::new(max_y, max_x, 0);
+            let mut map = Map::new((max_y, max_x), 0);
             for input in input {
                 let p = Point::new(
                     (input.p.i + i * input.v.i).rem_euclid(max_y as isize),
@@ -94,14 +94,10 @@ fn exec2(input: &Vec<Input>) -> String {
                     }
                 }
             }
-            // let map = get_robot_map(input, i);
-            // clear_screen();
-            // map.display_by(|v| (if *v > 0 { '1' } else { '.' }).to_string());
-            // let _ = wait_key();
         }
     };
 
-    get_robot_map(input, res).display_by(|v| (if *v > 0 { '1' } else { '.' }).to_string());
+    get_robot_map(input, res).display_by_char(|&v| if v > 0 { '1' } else { '.' });
 
     res.to_string()
 }
@@ -109,7 +105,7 @@ fn exec2(input: &Vec<Input>) -> String {
 fn get_robot_map(input: &Vec<Input>, steps: isize) -> Map<i32> {
     let max_y = 101;
     let max_x = 103;
-    let mut map = Map::new(max_y, max_x, 0);
+    let mut map = Map::new((max_y, max_x), 0);
     for input in input {
         let mut p = input.p;
         let v = input.v;
