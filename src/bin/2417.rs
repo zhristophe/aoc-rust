@@ -136,6 +136,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// 慢慢搜去吧 :)
+#[allow(dead_code)]
 fn part2_simple(idx: usize) -> String {
     let (registers, program) = read(idx);
 
@@ -171,8 +172,8 @@ fn part2_simple(idx: usize) -> String {
 fn part2(idx: usize) -> String {
     let (mut registers, program) = read(idx);
 
-    // 核心: A3 ^ 3 ^ (A >> A3 ^ 3) ^ 5 = X3
-    // 倒推，最后一次A 最多三位 （A >> 3 == 0）
+    /// 核心: `(A_3 ^ 3 ^ (A >> A_3 ^ 3) ^ 5)_3 = X`
+    /// 倒推，最后一次A最多三位 （A >> 3 == 0）
     fn dfs(reg_a: usize, idx: usize, program: &Vec<u8>) -> Option<usize> {
         if idx == program.len() {
             return Some(reg_a);
@@ -203,7 +204,7 @@ fn part2(idx: usize) -> String {
 
 fn main() {
     println!("{:?}", part1(0));
-    println!("{:?}", part2_simple(2));
+    // println!("{:?}", part2_simple(2));
     println!("{:?}", part2(0));
 }
 
@@ -213,10 +214,10 @@ mod tests {
 
     #[test]
     fn test() {
-        assert_eq!(part1(0), "2,0,1,3,4,0,2,1,7");
         assert_eq!(part1(1), "4,6,3,5,6,3,5,2,1,0");
+        assert_eq!(part1(0), "2,0,1,3,4,0,2,1,7");
 
-        assert_eq!(part2(0), "236580836040301");
         assert_eq!(part2_simple(2), "117440");
+        assert_eq!(part2(0), "236580836040301");
     }
 }
