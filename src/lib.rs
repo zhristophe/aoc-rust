@@ -41,7 +41,7 @@ pub fn clear_screen() {
     execute!(std::io::stdout(), cursor::MoveTo(0, 0)).unwrap();
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Map<T> {
     inner: Vec<Vec<T>>,
 }
@@ -400,7 +400,7 @@ impl Mul<isize> for Point {
     }
 }
 
-const DIRECTIONS: [Direction; 4] = [
+pub const DIRECTIONS: [Direction; 4] = [
     Direction::Up,
     Direction::Down,
     Direction::Left,
@@ -494,5 +494,36 @@ mod tests {
         assert_eq!(p.move_to(Direction::Down), Point::from((2, 2)));
         assert_eq!(p.move_to(Direction::Left), Point::from((1, 1)));
         assert_eq!(p.move_to(Direction::Right), Point::from((1, 3)));
+    }
+
+    #[test]
+    fn test_bfs() {
+        let map = r"
+.#.
+.#.
+...
+"
+        .trim();
+        let map: Vec<Vec<char>> = map.lines().map(|s| s.chars().collect()).collect();
+        let map = Map::from(map);
+        let start = Point::from((0, 0));
+        let end = Point::from((0, 2));
+        let mut steps = Map::new(map.size(), usize::MAX);
+        steps.get_mut(start).map(|v| *v = 0);
+        map.bfs_iter(start)
+            .with_visit_filter(|p| map.get(p) == Some(&'.'))
+            .with_update_rule(|old, new| {
+                let &old_val = steps.get(old).unwrap();
+                steps.get_mut(new).map(|v| *v = (*v).min(old_val + 1));
+            })
+            .run_with_target(|p| p == end);
+        assert_eq!(
+            steps,
+            Map::from(vec![
+                vec![0, usize::MAX, 6],
+                vec![1, usize::MAX, 5],
+                vec![2, 3, 4]
+            ])
+        );
     }
 }
