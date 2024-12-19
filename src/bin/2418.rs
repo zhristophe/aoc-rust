@@ -43,7 +43,7 @@ fn read(idx: usize) -> (Vec<Vec<usize>>, usize, usize) {
         ),
     ];
 
-    let input = if idx > inputs.len() {
+    let input = if idx >= inputs.len() {
         inputs.last().unwrap()
     } else {
         &inputs[idx]

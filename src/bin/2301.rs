@@ -90,7 +90,6 @@ fn part2(idx: usize) -> String {
     res.to_string()
 }
 
-#[allow(unused_variables)]
 fn main() {
     println!("{:?}", part1(0));
     println!("{:?}", part2(0));

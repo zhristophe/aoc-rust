@@ -1,9 +1,6 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    path::Path,
-    usize,
-};
+use std::{fs, path::Path, usize};
+
+use aoc::prelude::*;
 
 fn read(idx: usize) -> (Vec<String>, Vec<String>) {
     let name = module_path!().split("::").last().unwrap();
@@ -28,7 +25,7 @@ bbrgwb
         .trim(),
     ];
 
-    let input = if idx > inputs.len() {
+    let input = if idx >= inputs.len() {
         inputs.last().unwrap()
     } else {
         &inputs[idx]
