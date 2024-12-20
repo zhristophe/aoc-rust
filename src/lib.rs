@@ -1,6 +1,8 @@
 use std::{
-    collections::VecDeque,
+    collections::{HashMap, VecDeque},
+    fs,
     ops::{Add, Mul, Sub},
+    path::Path,
 };
 
 use crossterm::{
@@ -11,6 +13,39 @@ use crossterm::{
 };
 
 pub mod prelude;
+
+pub fn read_input(src_path: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let name = src_path.split("::").last().unwrap();
+    let file = format!("data/{}/input", name);
+    let file = Path::new(&file);
+
+    if !file.exists() {
+        let input = download_input(name)?;
+        fs::create_dir_all(file.parent().unwrap())?;
+        fs::write(file, input)?;
+    }
+
+    Ok(fs::read_to_string(file)?)
+}
+
+fn download_input(name: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let session = "data/cookie";
+    if !Path::new(session).exists() {
+        return Err("cookie not found".into());
+    }
+    let session = fs::read_to_string(session)?;
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(format!(
+            "https://adventofcode.com/20{}/day/{}/input",
+            &name[..2],
+            &name[2..].trim_start_matches('0')
+        ))
+        .header("COOKIE", format!("session={}", session))
+        .send()?;
+
+    Ok(response.text()?)
+}
 
 struct Guard<F>(F)
 where
@@ -513,6 +548,37 @@ impl Mul<isize> for Direction {
     }
 }
 
+#[derive(Debug)]
+pub struct NamePool {
+    map: HashMap<String, usize>,
+    pool: Vec<String>,
+}
+
+impl NamePool {
+    pub fn new() -> Self {
+        NamePool {
+            map: HashMap::new(),
+            pool: Vec::new(),
+        }
+    }
+
+    pub fn id(&mut self, name: impl AsRef<str>) -> usize {
+        let name = name.as_ref().to_string();
+        self.map
+            .entry(name.clone())
+            .or_insert_with(|| {
+                let id = self.pool.len();
+                self.pool.push(name);
+                id
+            })
+            .clone()
+    }
+
+    pub fn get(&self, id: usize) -> Option<&String> {
+        self.pool.get(id)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -529,19 +595,18 @@ mod tests {
     #[test]
     fn test_bfs() {
         let map = r"
-.#.
+S#E
 .#.
 ...
 "
         .trim();
         let map: Vec<Vec<char>> = map.lines().map(|s| s.chars().collect()).collect();
         let map = Map::from(map);
-        let start = Point::from((0, 0));
-        let end = Point::from((0, 2));
+        let stt = map.find_point('S').unwrap();
+        let end = map.find_point('E').unwrap();
         let mut steps = Map::new(map.size(), usize::MAX);
-        steps.get_mut(start).map(|v| *v = 0);
-        map.bfs_iter(start)
-            // .with_visit_filter(|p| map.get(p) == Some(&'.'))
+        steps.get_mut(stt).map(|v| *v = 0);
+        map.bfs_iter(stt)
             .skip_tiles(&'#')
             .on_discover(|old, new| {
                 let &old_val = steps.get(old).unwrap();

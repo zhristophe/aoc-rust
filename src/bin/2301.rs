@@ -1,15 +1,10 @@
-use std::{fs, path::Path};
-
-use regex::Regex;
+use aoc::prelude::*;
 
 fn read(idx: usize) -> Vec<Vec<char>> {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
-    let content = fs::read_to_string(file).unwrap();
+    let input = read_input(module_path!()).unwrap();
 
-    let inputs = [
-        &content,
+    let input = [
+        &input,
         r"
 1abc2
 pqr3stu8vwx
@@ -27,9 +22,9 @@ zoneight234
 7pqrstsixteen
 "
         .trim(),
-    ];
+    ][idx];
 
-    inputs[idx].lines().map(|s| s.chars().collect()).collect()
+    input.lines().map(|s| s.chars().collect()).collect()
 }
 
 fn part1(idx: usize) -> String {

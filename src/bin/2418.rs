@@ -1,15 +1,10 @@
-use std::{fs, path::Path, usize};
-
 use aoc::prelude::*;
 
 fn read(idx: usize) -> (Vec<Vec<usize>>, usize, usize) {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
-    let content = fs::read_to_string(file).unwrap();
+    let input = read_input(module_path!()).unwrap();
 
-    let inputs = [
-        (content.as_str(), 70),
+    let input = [
+        (input.as_str(), 70),
         (
             r"
 5,4
@@ -41,13 +36,7 @@ fn read(idx: usize) -> (Vec<Vec<usize>>, usize, usize) {
             .trim(),
             6,
         ),
-    ];
-
-    let input = if idx >= inputs.len() {
-        inputs.last().unwrap()
-    } else {
-        &inputs[idx]
-    };
+    ][idx];
 
     {
         let tmp = (

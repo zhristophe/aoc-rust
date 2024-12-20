@@ -1,21 +1,17 @@
 use std::{
-    fs,
-    path::Path,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
     thread::available_parallelism,
-    usize,
 };
 
 use rayon::prelude::*;
 
-fn read(idx: usize) -> (Vec<usize>, Vec<u8>) {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
-    let content = fs::read_to_string(file).unwrap();
+use aoc::read_input;
 
-    let inputs = [
-        &content,
+fn read(idx: usize) -> (Vec<usize>, Vec<u8>) {
+    let input = read_input(module_path!()).unwrap();
+
+    let input = [
+        &input,
         r"
 Register A: 729
 Register B: 0
@@ -32,13 +28,7 @@ Register C: 0
 Program: 0,3,5,4,3,0
         "
         .trim(),
-    ];
-
-    let input = if idx >= inputs.len() {
-        inputs.last().unwrap()
-    } else {
-        inputs[idx]
-    };
+    ][idx];
 
     {
         let tmp = input.split_once("\n\n").unwrap();

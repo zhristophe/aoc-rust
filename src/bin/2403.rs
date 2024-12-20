@@ -1,8 +1,27 @@
-use std::{fs, path::Path};
+use aoc::prelude::*;
 
-#[allow(dead_code)]
-fn exec1(input: &str) -> String {
-    // 语法解析器，直接调库就行，这里简单写一个
+fn read(idx: usize) -> String {
+    let input = read_input(module_path!()).unwrap();
+
+    let input = [
+        &input,
+        r"
+xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+"
+        .trim(),
+        r"
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+"
+        .trim(),
+    ][idx];
+
+    input.into()
+}
+
+/// 正则即可，这里简单写个语法解析器
+fn part1(idx: usize) -> String {
+    let input = read(idx);
+
     enum State {
         Mul(usize),
         LP,
@@ -12,6 +31,7 @@ fn exec1(input: &str) -> String {
         Com,
         Empty,
     }
+
     let mut iter = input.chars();
     let mut state = State::Empty;
     let mut lhs = 0;
@@ -68,8 +88,10 @@ fn exec1(input: &str) -> String {
     res.to_string()
 }
 
-fn exec2(input: &str) -> String {
-    // 和1差不多，稍微改改
+/// 和1差不多，稍微改改
+fn part2(idx: usize) -> String {
+    let input = read(idx);
+
     // don't和mul没有重复字母
     enum State {
         Mul(usize),
@@ -162,14 +184,21 @@ fn exec2(input: &str) -> String {
     res.to_string()
 }
 
-#[allow(unused_variables)]
 fn main() {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
+    println!("{:?}", part1(0));
+    println!("{:?}", part2(0));
+}
 
-    // let input = r"don't()mul(114,100)";
-    let input = fs::read_to_string(file).unwrap();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    println!("{:?}", exec2(&input));
+    #[test]
+    fn test() {
+        assert_eq!(part1(0), "190604937");
+        assert_eq!(part1(1), "161");
+
+        assert_eq!(part2(0), "82857512");
+        assert_eq!(part2(2), "48");
+    }
 }

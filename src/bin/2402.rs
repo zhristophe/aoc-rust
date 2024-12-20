@@ -1,7 +1,35 @@
-use std::{fs, path::Path};
+use aoc::prelude::*;
 
-#[allow(dead_code)]
-fn exec1(input: &Vec<Vec<i32>>) -> String {
+fn read(idx: usize) -> Vec<Vec<i32>> {
+    let input = read_input(module_path!()).unwrap();
+
+    let input = [
+        &input,
+        r"
+7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9
+"
+        .trim(),
+    ][idx];
+
+    input
+        .lines()
+        .into_iter()
+        .map(|s| {
+            s.split_ascii_whitespace()
+                .map(|s| s.parse().unwrap())
+                .collect()
+        })
+        .collect()
+}
+
+fn part1(idx: usize) -> String {
+    let input = read(idx);
+
     let len = input.len();
     let mut res = len;
     for i in 0..len {
@@ -20,7 +48,9 @@ fn exec1(input: &Vec<Vec<i32>>) -> String {
     res.to_string()
 }
 
-fn exec2(input: &Vec<Vec<i32>>) -> String {
+fn part2(idx: usize) -> String {
+    let input = read(idx);
+
     let len = input.len();
     let mut res = len;
 
@@ -81,29 +111,21 @@ fn exec2(input: &Vec<Vec<i32>>) -> String {
     res.to_string()
 }
 
-#[allow(unused_variables)]
 fn main() {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
+    println!("{:?}", part1(0));
+    println!("{:?}", part2(0));
+}
 
-    let input = r"7 6 4 2 1
-1 2 7 8 9
-9 7 6 2 1
-1 3 2 4 5
-8 6 4 4 1
-1 3 6 7 9";
-    let input = fs::read_to_string(file).unwrap();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let input = input
-        .lines()
-        .into_iter()
-        .map(|s| {
-            s.split_ascii_whitespace()
-                .map(|s| s.parse().unwrap())
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
+    #[test]
+    fn test() {
+        assert_eq!(part1(0), "369");
+        assert_eq!(part1(1), "2");
 
-    println!("{:?}", exec2(&input));
+        assert_eq!(part2(0), "428");
+        assert_eq!(part2(1), "4");
+    }
 }

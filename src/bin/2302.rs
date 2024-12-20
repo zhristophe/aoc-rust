@@ -1,13 +1,10 @@
-use std::{fs, path::Path};
+use aoc::prelude::*;
 
 fn read(idx: usize) -> Vec<Vec<Vec<Cube>>> {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
-    let content = fs::read_to_string(file).unwrap();
+    let input = read_input(module_path!()).unwrap();
 
-    let inputs = [
-        &content,
+    let input = [
+        &input,
         r"
 Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
@@ -16,13 +13,7 @@ Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 "
         .trim(),
-    ];
-
-    let input = if idx >= inputs.len() {
-        inputs.last().unwrap()
-    } else {
-        &inputs[idx]
-    };
+    ][idx];
 
     {
         let tmp = input
