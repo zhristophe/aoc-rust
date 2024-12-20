@@ -75,7 +75,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-// 和part1类似，只是计数
+/// 和part1类似，只是计数
 fn part2(idx: usize) -> String {
     let (towels, desired) = read(idx);
 

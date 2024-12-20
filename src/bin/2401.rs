@@ -1,8 +1,50 @@
-use std::{fs, path::Path, vec};
+use std::{fs, path::Path, usize};
 
-#[allow(dead_code)]
-fn exec1(input: &Vec<Vec<i32>>) -> String {
-    let len = input.len();
+// use aoc::prelude::*;
+
+fn read(idx: usize) -> Vec<Vec<isize>> {
+    let name = module_path!().split("::").last().unwrap();
+    let file = format!("data/{}/input", name);
+    let file = Path::new(&file);
+    let content = fs::read_to_string(file).unwrap();
+
+    let inputs = [
+        content.as_str(),
+        r"
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+"
+        .trim(),
+    ];
+
+    let input = if idx >= inputs.len() {
+        inputs.last().unwrap()
+    } else {
+        &inputs[idx]
+    };
+
+    {
+        input
+            .lines()
+            .into_iter()
+            .map(|s| {
+                s.split_ascii_whitespace()
+                    .map(|s| s.parse().unwrap())
+                    .collect()
+            })
+            .collect()
+    }
+}
+
+/// easy
+fn part1(idx: usize) -> String {
+    let input = read(idx);
+
+    let len: usize = input.len();
     let input = {
         let mut tmp = vec![vec![0; len]; 2];
         for i in 0..2 {
@@ -14,8 +56,6 @@ fn exec1(input: &Vec<Vec<i32>>) -> String {
         tmp
     };
 
-    // dbg!(&input);
-
     let mut ret = 0;
     for i in 0..len {
         ret += (input[0][i] - input[1][i]).abs();
@@ -24,9 +64,11 @@ fn exec1(input: &Vec<Vec<i32>>) -> String {
     ret.to_string()
 }
 
-fn exec2(input: &Vec<Vec<i32>>) -> String {
+/// easy
+fn part2(idx: usize) -> String {
+    let input = read(idx);
+
     let len = input.len();
-    // 数据量太小，懒得优化了
     let mut res = 0;
     for i in 0..len {
         let left = input[i][0];
@@ -42,29 +84,21 @@ fn exec2(input: &Vec<Vec<i32>>) -> String {
     res.to_string()
 }
 
-#[allow(unused_variables)]
 fn main() {
-    let name = module_path!().split("::").last().unwrap();
-    let file = format!("data/{}/input", name);
-    let file = Path::new(&file);
+    println!("{:?}", part1(0));
+    println!("{:?}", part2(0));
+}
 
-    let input = r"3   4
-    4   3
-    2   5
-    1   3
-    3   9
-    3   3";
-    let input = fs::read_to_string(file).unwrap();
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let input = input
-        .lines()
-        .into_iter()
-        .map(|s| {
-            s.split_ascii_whitespace()
-                .map(|s| s.parse().unwrap())
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
+    #[test]
+    fn test() {
+        assert_eq!(part1(1), "11");
+        assert_eq!(part1(0), "936063");
 
-    println!("{:?}", exec2(&input));
+        assert_eq!(part2(1), "31");
+        assert_eq!(part2(0), "23150395");
+    }
 }
