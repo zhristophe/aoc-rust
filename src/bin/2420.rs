@@ -47,56 +47,43 @@ fn part1(idx: usize) -> String {
     let map = read(idx);
     let map = Map::from(map);
 
-    let start = map.find_point('S').unwrap();
+    let stt = map.find_point('S').unwrap();
     let end = map.find_point('E').unwrap();
 
+    // 原本的代码虽然通过，但是疑似有bug
+    // 新代码从end出发，遍历全图
     let mut steps = Map::new(map.size(), usize::MAX);
-    steps.get_mut(start).map(|v| *v = 0);
-
-    map.bfs_iter(start)
+    steps.get_mut(end).map(|v| *v = 0);
+    map.bfs_iter(end)
         .skip_tiles(&'#')
         .on_discover(|old, new| {
             let &old_val = steps.get(old).unwrap();
             steps.get_mut(new).map(|v| *v = (*v).min(old_val + 1));
         })
-        .run_with_target(end);
+        .run();
 
-    // map.bfs_iter(start)
-    //     .skip_tile(&'#')
-    //     .on_discover(|_, new| {})
-    //     .run_with_target(end);
-
+    // 然后从stt出发，遍历作弊方法
     let mut res = 0;
-    let mut cur = start;
-    'main: loop {
-        if cur == end {
-            break 'main;
-        }
-
-        let step = steps.get(cur).unwrap();
-        let mut next = cur;
-        for d in DIRECTIONS {
-            next = cur + d;
-            if steps.get(next) == Some(&(step + 1)) {
-                break;
-            }
-        }
-        for d in DIRECTIONS {
-            let cheat_next = cur + d * 2;
-            if let Some(&cheat_step) = steps.get(cheat_next) {
-                if cheat_step == usize::MAX {
-                    continue;
-                }
-                if cheat_step > *step + 2 {
-                    let rev_step = cheat_step - step - 2;
-                    if rev_step >= 100 {
-                        res += 1;
+    map.bfs_iter(stt)
+        .skip_tiles(&'#')
+        .on_visit(|cur| {
+            let &cur_step = steps.get(cur).unwrap();
+            for d in DIRECTIONS {
+                let cheat = cur + d * 2;
+                if let Some(&cheat_step) = steps.get(cheat) {
+                    if cheat_step == usize::MAX {
+                        continue;
+                    }
+                    if cur_step > cheat_step + 2 {
+                        let save_step = cur_step - cheat_step - 2;
+                        if save_step >= 100 {
+                            res += 1;
+                        }
                     }
                 }
             }
-        }
-        cur = next;
-    }
+        })
+        .run();
 
     res.to_string()
 }
@@ -106,58 +93,47 @@ fn part2(idx: usize) -> String {
     let map = read(idx);
     let map = Map::from(map);
 
-    let start = map.find_point('S').unwrap();
+    let stt = map.find_point('S').unwrap();
     let end = map.find_point('E').unwrap();
 
+    // 类似第一问，从end出发，遍历全图
     let mut steps = Map::new(map.size(), usize::MAX);
-    steps.get_mut(start).map(|v| *v = 0);
-
-    map.bfs_iter(start)
+    steps.get_mut(end).map(|v| *v = 0);
+    map.bfs_iter(end)
         .skip_tiles(&'#')
         .on_discover(|old, new| {
             let &old_val = steps.get(old).unwrap();
             steps.get_mut(new).map(|v| *v = (*v).min(old_val + 1));
         })
-        .run_with_target(end);
+        .run();
 
+    // 然后从stt出发，遍历作弊方法
     let mut res = 0;
-    // 搜索20步以内小于100的
-    let mut cur = start;
-    'main: loop {
-        if cur == end {
-            break 'main;
-        }
-
-        let step = steps.get(cur).unwrap();
-        let mut next = cur;
-        for d in DIRECTIONS {
-            next = cur + d;
-            if steps.get(next) == Some(&(step + 1)) {
-                break;
-            }
-        }
-        for i in -20..=20 as isize {
-            let max_j = 20 - i.abs();
-            for j in -max_j..=max_j {
-                let cheat_next = cur + Point::new(i, j);
-                if let Some(&cheat_step) = steps.get(cheat_next) {
-                    if cheat_step == usize::MAX {
-                        continue;
-                    }
-                    let cheat_cnt = i.abs() + j.abs();
-                    let cheat_cnt = cheat_cnt as usize;
-                    if cheat_step > *step + cheat_cnt {
-                        let rev_step = cheat_step - step - cheat_cnt;
-                        if rev_step >= 100 {
-                            res += 1;
+    map.bfs_iter(stt)
+        .skip_tiles(&'#')
+        .on_visit(|cur| {
+            let &cur_step = steps.get(cur).unwrap();
+            for i in -20..=20 as isize {
+                let max_j = 20 - i.abs();
+                for j in -max_j..=max_j {
+                    let cheat = cur + Point::new(i, j);
+                    if let Some(&cheat_step) = steps.get(cheat) {
+                        if cheat_step == usize::MAX {
+                            continue;
+                        }
+                        let cheat_cnt = i.abs() + j.abs();
+                        let cheat_cnt = cheat_cnt as usize;
+                        if cur_step > cheat_step + cheat_cnt {
+                            let save_step = cur_step - cheat_step - cheat_cnt;
+                            if save_step >= 100 {
+                                res += 1;
+                            }
                         }
                     }
                 }
             }
-        }
-
-        cur = next;
-    }
+        })
+        .run();
 
     res.to_string()
 }
