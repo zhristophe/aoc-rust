@@ -163,11 +163,12 @@ impl<T> Map<T> {
 pub struct BfsIter<'a, T> {
     queue: VecDeque<Point>,
     visited: Map<bool>,
+    discovered: Map<bool>,
     map: &'a Map<T>,
 
     visit_filter: Option<Box<dyn Fn(Point) -> bool + 'a>>,
-    end_condition: Option<Box<dyn Fn(Point) -> bool + 'a>>,
-    update_rule: Option<Box<dyn FnMut(Point, Point) + 'a>>,
+    discovery_handler: Option<Box<dyn FnMut(Point, Point) + 'a>>,
+    visit_handler: Option<Box<dyn FnMut(Point) + 'a>>,
 }
 
 impl<'a, T> BfsIter<'a, T> {
@@ -175,14 +176,16 @@ impl<'a, T> BfsIter<'a, T> {
         BfsIter {
             queue: VecDeque::from([start]),
             visited: Map::new(map.size(), false),
+            discovered: Map::new(map.size(), false),
             map,
 
             visit_filter: None,
-            end_condition: None,
-            update_rule: None,
+            discovery_handler: None,
+            visit_handler: None,
         }
     }
 
+    /// 设置访问过滤，可访问点返回true
     pub fn with_visit_filter<F>(&mut self, filter: F) -> &mut Self
     where
         F: Fn(Point) -> bool + 'a,
@@ -191,40 +194,66 @@ impl<'a, T> BfsIter<'a, T> {
         self
     }
 
-    pub fn with_update_rule<F>(&mut self, rule: F) -> &mut Self
+    pub fn skip_tiles(&mut self, tile: &'a T) -> &mut Self
     where
-        F: FnMut(Point, Point) + 'a,
+        T: PartialEq<T> + Clone,
     {
-        self.update_rule = Some(Box::new(rule));
+        self.visit_filter = Some(Box::new(|pt| self.map.get(pt) != Some(tile)));
         self
     }
 
+    pub fn only_tiles(&mut self, tile: &'a T) -> &mut Self
+    where
+        T: PartialEq<T> + Clone,
+    {
+        self.visit_filter = Some(Box::new(|pt| self.map.get(pt) == Some(tile)));
+        self
+    }
+
+    /// 发现节点时执行函数
+    pub fn on_discover<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnMut(Point, Point) + 'a,
+    {
+        self.discovery_handler = Some(Box::new(f));
+        self
+    }
+
+    /// 访问节点时执行函数
+    pub fn on_visit<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnMut(Point) + 'a,
+    {
+        self.visit_handler = Some(Box::new(f));
+        self
+    }
+
+    /// 无目标搜索，直到没有点可以访问
     pub fn run(&mut self) {
         while self.next().is_some() {}
     }
 
-    /// 闭包函数判断点是否是目标
-    pub fn run_with_target<F>(&mut self, target: F) -> bool
-    where
-        F: Fn(Point) -> bool + 'a,
-    {
-        self.end_condition = Some(Box::new(target));
+    /// 有目标搜索，直到目标点被找到，或者没有点可以访问
+    /// 返回是否找到目标点
+    pub fn run_with_target(&mut self, target: Point) -> bool {
         while let Some(pt) = self.next() {
-            if let Some(cond) = &self.end_condition {
-                if cond(pt) {
-                    return true;
-                }
+            if pt == target {
+                return true;
             }
         }
         false
     }
 
+    pub fn is_discovered(&self, pt: Point) -> bool {
+        self.discovered.get(pt).copied().unwrap_or(false)
+    }
+
+    pub fn is_visited(&self, pt: Point) -> bool {
+        self.visited.get(pt).copied().unwrap_or(false)
+    }
+
     pub fn next_val(&mut self) -> Option<&T> {
-        if let Some(pt) = self.next() {
-            self.map.get(pt)
-        } else {
-            None
-        }
+        self.next().and_then(|pt| self.map.get(pt))
     }
 }
 
@@ -232,33 +261,34 @@ impl<'a, T> Iterator for BfsIter<'a, T> {
     type Item = Point;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(pt) = self.queue.pop_front() {
-            self.visited.set(pt, true);
+        if let Some(cur) = self.queue.pop_front() {
+            self.visited.set(cur, true);
+
+            self.visit_handler.as_mut().map(|f| f(cur));
 
             for dir in DIRECTIONS {
-                let next_pt = pt + dir;
-                if self.visited.get(next_pt) != Some(&false) {
+                let next = cur + dir;
+
+                if self.map.get(next).is_none() {
                     continue;
                 }
-                if let Some(filter) = &self.visit_filter {
-                    if !filter(next_pt) {
-                        continue;
-                    }
+
+                if self.is_discovered(next) || self.is_visited(next) {
+                    continue;
                 }
-                if let Some(update) = &mut self.update_rule {
-                    update(pt, next_pt);
+
+                if self.visit_filter.as_ref().map(|f| f(next)) == Some(false) {
+                    continue;
                 }
-                if let Some(cond) = &self.end_condition {
-                    if cond(next_pt) {
-                        self.queue.clear();
-                        return Some(next_pt);
-                    }
-                }
-                if !self.queue.contains(&next_pt) {
-                    self.queue.push_back(next_pt);
-                }
+
+                self.discovered.set(next, true);
+
+                self.discovery_handler.as_mut().map(|f| f(cur, next));
+
+                self.queue.push_back(next);
             }
-            return Some(pt);
+
+            return Some(cur);
         }
         None
     }
@@ -511,12 +541,13 @@ mod tests {
         let mut steps = Map::new(map.size(), usize::MAX);
         steps.get_mut(start).map(|v| *v = 0);
         map.bfs_iter(start)
-            .with_visit_filter(|p| map.get(p) == Some(&'.'))
-            .with_update_rule(|old, new| {
+            // .with_visit_filter(|p| map.get(p) == Some(&'.'))
+            .skip_tiles(&'#')
+            .on_discover(|old, new| {
                 let &old_val = steps.get(old).unwrap();
                 steps.get_mut(new).map(|v| *v = (*v).min(old_val + 1));
             })
-            .run_with_target(|p| p == end);
+            .run_with_target(end);
         assert_eq!(
             steps,
             Map::from(vec![

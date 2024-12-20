@@ -42,7 +42,7 @@ fn read(idx: usize) -> Vec<Vec<char>> {
     }
 }
 
-/// 先广播步数（bfs），再easy
+/// 只有一条路径，easy
 fn part1(idx: usize) -> String {
     let map = read(idx);
     let map = Map::from(map);
@@ -60,11 +60,6 @@ fn part1(idx: usize) -> String {
             steps.get_mut(new).map(|v| *v = (*v).min(old_val + 1));
         })
         .run_with_target(end);
-
-    // map.bfs_iter(start)
-    //     .skip_tile(&'#')
-    //     .on_discover(|_, new| {})
-    //     .run_with_target(end);
 
     let mut res = 0;
     let mut cur = start;
