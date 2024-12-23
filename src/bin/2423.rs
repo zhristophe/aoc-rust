@@ -100,14 +100,12 @@ fn part1(idx: usize) -> String {
                     continue;
                 }
                 if map.get(a).unwrap().contains(b) {
-                    // dbg!((&cur, a, b));
                     for s in [&cur, a, b] {
                         if s.starts_with('t') {
                             res += 1;
                             break;
                         }
                     }
-                    // res += 1;
                 }
             }
             if discovered.contains(a) || visited.contains(a) {
@@ -127,9 +125,9 @@ fn part1(idx: usize) -> String {
 /// 但是提升效果不是来自并行而是来自初始值的选择
 fn part2(idx: usize) -> String {
     let map = read(idx);
+    let len = map.len();
     let mut pool = NamePool::new();
     let (adj, adj_cnt) = {
-        let len = map.len();
         let mut adj = vec![vec![false; len]; len];
         let mut adj_cnt = vec![0; len];
         for (a, b) in map {
@@ -142,98 +140,80 @@ fn part2(idx: usize) -> String {
         (adj, adj_cnt)
     };
 
-    fn find_max_clique(
-        cur: usize,
-        clique: &mut Vec<usize>,
-        adj: &Vec<Vec<bool>>,
-        adj_cnt: &Vec<usize>,
-        max_idx: usize,
-        max_clique: &mut Vec<usize>,
-        len_limit: usize,
-        state: &SearchState,
-    ) {
-        if state.end.load(Ordering::Relaxed) {
+    fn find_max_clique(cur: usize, state: &mut LocalState, global: &GlobalState) {
+        if global.end.load(Ordering::Relaxed)
+            || state.max_clique.len() >= state.len_limit
+            || cur >= state.max_idx
+        {
             return;
         }
-        if max_clique.len() >= len_limit {
-            return;
+        if state.max_clique.len() < state.clique.len() {
+            state.max_clique = state.clique.clone();
         }
-        if clique.len() > max_clique.len() {
-            *max_clique = clique.clone();
-        }
-        if cur >= max_idx {
-            return;
-        }
-        let can_add = adj_cnt[cur] >= clique.len() && clique.iter().all(|&node| adj[node][cur]);
-        // 选择
-        if can_add {
-            clique.push(cur);
-            find_max_clique(
-                cur + 1,
-                clique,
+        let can_add = {
+            let LocalState {
                 adj,
                 adj_cnt,
-                max_idx,
-                max_clique,
-                len_limit,
-                state,
-            );
-            clique.pop();
+                clique,
+                ..
+            } = state;
+            adj_cnt[cur] >= clique.len() && clique.iter().all(|&node| adj[node][cur])
+        };
+        // 选择
+        if can_add {
+            state.clique.push(cur);
+            find_max_clique(cur + 1, state, global);
+            state.clique.pop();
         }
         // 不选择
-        find_max_clique(
-            cur + 1,
-            clique,
-            adj,
-            adj_cnt,
-            max_idx,
-            max_clique,
-            len_limit,
-            state,
-        );
+        find_max_clique(cur + 1, state, global);
     }
 
     // 数据中所有节点的度一致，基于度的启发式搜索无效
-    let &max_len = adj_cnt.iter().max().unwrap();
+    let &len_limit = adj_cnt.iter().max().unwrap();
     // 下面进行并行搜索
     // 并行状态
-    struct SearchState {
+    struct GlobalState {
         end: Arc<AtomicBool>,
         max_clique: Arc<Mutex<Vec<usize>>>,
     }
-    let state = SearchState {
+    struct LocalState<'a> {
+        clique: Vec<usize>,
+        adj: &'a Vec<Vec<bool>>,
+        adj_cnt: &'a Vec<usize>,
+        max_idx: usize,
+        max_clique: Vec<usize>,
+        len_limit: usize,
+    }
+    let global_state = GlobalState {
         end: Arc::new(AtomicBool::new(false)),
         max_clique: Arc::new(Mutex::new(Vec::new())),
     };
-    // 事实上，选择从46开始搜，并行都不需要 :)
+    // 碰运气，如果正好以正确答案开始就会搜得很快
     let num_threads = available_parallelism().unwrap().get().max(32);
     (0..num_threads).into_par_iter().for_each(|id| {
-        let mut clique = Vec::new();
-        let mut local_max_clique = Vec::new();
-        find_max_clique(
-            id,
-            &mut clique,
-            &adj,
-            &adj_cnt,
-            adj_cnt.len(),
-            &mut local_max_clique,
-            max_len,
-            &state,
-        );
+        let mut local_state = LocalState {
+            clique: Vec::new(),
+            adj: &adj,
+            adj_cnt: &adj_cnt,
+            max_idx: adj_cnt.len(),
+            max_clique: Vec::new(),
+            len_limit,
+        };
+        // 每个线程搜一个子空间，起始位置为id乘以2，增加撞答案概率
+        find_max_clique(id * 2, &mut local_state, &global_state);
 
-        {
-            let mut max_clique = state.max_clique.lock().unwrap();
-            if local_max_clique.len() > max_clique.len() {
-                *max_clique = local_max_clique.clone();
-            }
-            if local_max_clique.len() >= max_len {
-                state.end.store(true, Ordering::Relaxed);
-            }
+        let mut max_clique = global_state.max_clique.lock().unwrap();
+        if local_state.max_clique.len() > max_clique.len() {
+            *max_clique = local_state.max_clique.clone();
+        }
+        if local_state.max_clique.len() >= len_limit {
+            global_state.end.store(true, Ordering::Relaxed);
         }
     });
     let mut res = {
         let mut tmp = Vec::new();
-        let max_clique = state.max_clique.lock().unwrap();
+        let max_clique = global_state.max_clique.lock().unwrap();
         for &i in max_clique.iter() {
             tmp.push(pool.name(i).unwrap().clone());
         }
