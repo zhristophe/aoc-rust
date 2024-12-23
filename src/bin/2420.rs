@@ -34,14 +34,14 @@ fn read(idx: usize) -> Vec<Vec<char>> {
 /// 先广播步数（bfs），再easy
 fn part1(idx: usize) -> String {
     let map = read(idx);
-    let map = Map::from(map);
+    let map = Grid::from(map);
 
     let stt = map.find_point('S').unwrap();
     let end = map.find_point('E').unwrap();
 
     // 原本的代码虽然通过，但是疑似有bug
     // 新代码从end出发，遍历全图
-    let mut steps = Map::new(map.size(), usize::MAX);
+    let mut steps = Grid::new(map.size(), usize::MAX);
     steps.get_mut(end).map(|v| *v = 0);
     map.bfs_iter(end)
         .skip_tiles(&'#')
@@ -80,13 +80,13 @@ fn part1(idx: usize) -> String {
 /// 基本一样，只是搜索20步
 fn part2(idx: usize) -> String {
     let map = read(idx);
-    let map = Map::from(map);
+    let map = Grid::from(map);
 
     let stt = map.find_point('S').unwrap();
     let end = map.find_point('E').unwrap();
 
     // 类似第一问，从end出发，遍历全图
-    let mut steps = Map::new(map.size(), usize::MAX);
+    let mut steps = Grid::new(map.size(), usize::MAX);
     steps.get_mut(end).map(|v| *v = 0);
     map.bfs_iter(end)
         .skip_tiles(&'#')

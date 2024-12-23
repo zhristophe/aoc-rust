@@ -2,6 +2,11 @@ pub use std::collections::{HashMap, HashSet, VecDeque};
 
 pub use regex::Regex;
 
-pub use super::DIRECTIONS;
+pub mod v1 {
+    pub use crate::{
+        grid::{Direction, Grid, Point, DIRECTIONS},
+        read_input, NamePool,
+    };
+}
 
-pub use super::{read_input, Direction, Map, NamePool, Point};
+pub use v1::*;

@@ -1,10 +1,10 @@
 use std::{collections::HashMap, fs, path::Path};
 
-use aoc::{Map, Point};
+use aoc::{Grid, Point};
 
 #[allow(dead_code)]
 fn exec1(input: Vec<Vec<char>>) -> String {
-    let map = Map::from(input);
+    let map = Grid::from(input);
     let mut ant_map: HashMap<char, Vec<Point>> = HashMap::new();
 
     for pt in map.points() {
@@ -18,7 +18,7 @@ fn exec1(input: Vec<Vec<char>>) -> String {
             .or_insert(vec![pt]);
     }
 
-    let mut is_node = Map::new(map.size(), false);
+    let mut is_node = Grid::new(map.size(), false);
     for (_, ants) in &ant_map {
         for i in 0..ants.len() {
             for j in i + 1..ants.len() {
@@ -42,7 +42,7 @@ fn exec1(input: Vec<Vec<char>>) -> String {
 
 #[allow(dead_code)]
 fn exec2(input: Vec<Vec<char>>) -> String {
-    let map = Map::from(input);
+    let map = Grid::from(input);
     let mut ant_map: HashMap<char, Vec<Point>> = HashMap::new();
 
     for pt in map.points() {
@@ -56,7 +56,7 @@ fn exec2(input: Vec<Vec<char>>) -> String {
             .or_insert(vec![pt]);
     }
 
-    let mut is_node = Map::new(map.size(), false);
+    let mut is_node = Grid::new(map.size(), false);
     for (_, ants) in &ant_map {
         for i in 0..ants.len() {
             for j in i + 1..ants.len() {

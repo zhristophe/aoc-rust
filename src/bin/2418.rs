@@ -59,14 +59,14 @@ fn part1(idx: usize) -> String {
     let stt = Point::from((0, 0));
     let end = Point::from((x - 1, y - 1));
 
-    let mut map = Map::new((x, y), 0);
+    let mut map = Grid::new((x, y), 0);
     let n = if x == 71 { 1024 } else { 12 };
     for i in 0..n {
         map.get_mut((bytes[i][1], bytes[i][0]).into())
             .map(|v| *v += 1);
     }
 
-    let mut steps = Map::new((x, y), usize::MAX);
+    let mut steps = Grid::new((x, y), usize::MAX);
     steps.get_mut(stt).map(|v| *v = 0);
     map.bfs_iter(stt)
         .only_tiles(&0)
@@ -94,7 +94,7 @@ fn part2(idx: usize) -> String {
             break maxn;
         }
         let mid = (maxn + minn) / 2;
-        let mut map = Map::new((x, y), 0);
+        let mut map = Grid::new((x, y), 0);
         for i in 0..mid {
             map.get_mut(Point::from((bytes[i][1], bytes[i][0])))
                 .map(|v| *v += 1);

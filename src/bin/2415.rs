@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use aoc::{Direction, Map};
+use aoc::{Direction, Grid};
 // use crossterm::{
 //     cursor,
 //     event::{read, Event, KeyCode, KeyEvent},
@@ -11,7 +11,7 @@ use aoc::{Direction, Map};
 
 #[allow(dead_code)]
 fn exec1(input: (Vec<Vec<char>>, Vec<char>)) -> String {
-    let (mut map, seq) = (Map::from(input.0), input.1);
+    let (mut map, seq) = (Grid::from(input.0), input.1);
 
     let mut rbt = map.find_point('@').unwrap();
     map.set(rbt, '.');
@@ -94,7 +94,7 @@ fn exec2(input: (Vec<Vec<char>>, Vec<char>)) -> String {
                         .collect()
                 })
                 .collect();
-            Map::from(tmp)
+            Grid::from(tmp)
         },
         input.1,
     );

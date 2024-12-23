@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use aoc::{Map, Point};
+use aoc::{Grid, Point};
 use regex::Regex;
 
 #[derive(Debug, Clone, Copy)]
@@ -73,7 +73,7 @@ fn exec2(input: &Vec<Input>) -> String {
 
     let res = 'main: loop {
         for i in 0.. {
-            let mut map = Map::new((max_y, max_x), 0);
+            let mut map = Grid::new((max_y, max_x), 0);
             for input in input {
                 let p = Point::new(
                     (input.p.i + i * input.v.i).rem_euclid(max_y as isize),
@@ -102,10 +102,10 @@ fn exec2(input: &Vec<Input>) -> String {
     res.to_string()
 }
 
-fn get_robot_map(input: &Vec<Input>, steps: isize) -> Map<i32> {
+fn get_robot_map(input: &Vec<Input>, steps: isize) -> Grid<i32> {
     let max_y = 101;
     let max_x = 103;
-    let mut map = Map::new((max_y, max_x), 0);
+    let mut map = Grid::new((max_y, max_x), 0);
     for input in input {
         let mut p = input.p;
         let v = input.v;

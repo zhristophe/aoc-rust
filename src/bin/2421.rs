@@ -21,13 +21,13 @@ fn read(idx: usize) -> Vec<Vec<char>> {
     }
 }
 
-fn seq_for_seq(tgt: Vec<char>, map: &Map<char>) -> Vec<char> {
+fn seq_for_seq(tgt: Vec<char>, map: &Grid<char>) -> Vec<char> {
     let mut cur = map.find_point('A').unwrap();
     let mut res = Vec::new();
     for tgt in tgt {
         let tgt = map.find_point(tgt).unwrap();
         let mut seq = VecDeque::new();
-        let mut steps = Map::new(map.size(), Direction::Up);
+        let mut steps = Grid::new(map.size(), Direction::Up);
         map.bfs_iter(cur)
             .skip_tiles(&' ')
             .on_discover(|old, new| {
@@ -75,7 +75,7 @@ fn part1(idx: usize) -> String {
         vec![' ', '0', 'A'],
     ];
     let map2 = vec![vec![' ', '^', 'A'], vec!['<', 'v', '>']];
-    let (map1, map2) = (Map::from(map1), Map::from(map2));
+    let (map1, map2) = (Grid::from(map1), Grid::from(map2));
     for input in input {
         let tgt = input;
         let seq1 = seq_for_seq(tgt, &map2);

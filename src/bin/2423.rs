@@ -1,4 +1,13 @@
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+    thread::available_parallelism,
+};
+
 use aoc::prelude::*;
+use rayon::prelude::*;
 
 fn read(idx: usize) -> Vec<(String, String)> {
     let input = read_input(module_path!()).unwrap();
@@ -114,63 +123,122 @@ fn part1(idx: usize) -> String {
 
 /// 最大团？？？
 /// 最简单的回溯，大约要算40s
+/// 并行后只需要0.09s
+/// 但是提升效果不是来自并行而是来自初始值的选择
 fn part2(idx: usize) -> String {
     let map = read(idx);
-    // let mut set = HashSet::new();
-    let map = {
-        let mut tmp = HashMap::new();
+    let mut pool = NamePool::new();
+    let (adj, adj_cnt) = {
+        let len = map.len();
+        let mut adj = vec![vec![false; len]; len];
+        let mut adj_cnt = vec![0; len];
         for (a, b) in map {
-            tmp.entry(a.clone())
-                .or_insert_with(Vec::new)
-                .push(b.clone());
-            tmp.entry(b).or_insert_with(Vec::new).push(a);
+            let (a, b) = (pool.id(a), pool.id(b));
+            adj_cnt[a] += 1;
+            adj_cnt[b] += 1;
+            adj[a][b] = true;
+            adj[b][a] = true;
         }
-        tmp
+        (adj, adj_cnt)
     };
 
     fn find_max_clique(
-        map: &HashMap<String, Vec<String>>,
-        nodes: &Vec<&String>,
-        idx: usize,
-        clique: Vec<String>,
-    ) -> Vec<String> {
-        if idx >= nodes.len() {
-            return clique;
+        cur: usize,
+        clique: &mut Vec<usize>,
+        adj: &Vec<Vec<bool>>,
+        adj_cnt: &Vec<usize>,
+        max_idx: usize,
+        max_clique: &mut Vec<usize>,
+        len_limit: usize,
+        state: &SearchState,
+    ) {
+        if state.end.load(Ordering::Relaxed) {
+            return;
         }
-
-        let cur = nodes[idx];
-        let is_clique = 'is_clique: loop {
-            for node in &clique {
-                if !map.get(node).unwrap().contains(cur) {
-                    break 'is_clique false;
-                }
-            }
-            break 'is_clique true;
-        };
-
-        let mut res = Vec::new();
-
-        if is_clique {
-            let mut new_clique = clique.clone();
-            new_clique.push(cur.clone());
-            res.push(find_max_clique(map, nodes, idx + 1, new_clique));
+        if max_clique.len() >= len_limit {
+            return;
         }
-
-        res.push(find_max_clique(map, nodes, idx + 1, clique));
-
-        if res.len() == 1 {
-            res[0].clone()
-        } else {
-            if res[0].len() > res[1].len() {
-                res[0].clone()
-            } else {
-                res[1].clone()
-            }
+        if clique.len() > max_clique.len() {
+            *max_clique = clique.clone();
         }
+        if cur >= max_idx {
+            return;
+        }
+        let can_add = adj_cnt[cur] >= clique.len() && clique.iter().all(|&node| adj[node][cur]);
+        // 选择
+        if can_add {
+            clique.push(cur);
+            find_max_clique(
+                cur + 1,
+                clique,
+                adj,
+                adj_cnt,
+                max_idx,
+                max_clique,
+                len_limit,
+                state,
+            );
+            clique.pop();
+        }
+        // 不选择
+        find_max_clique(
+            cur + 1,
+            clique,
+            adj,
+            adj_cnt,
+            max_idx,
+            max_clique,
+            len_limit,
+            state,
+        );
     }
 
-    let nodes = map.keys().collect::<Vec<_>>();
-    let mut res = find_max_clique(&map, &nodes, 0, vec![]);
+    // 数据中所有节点的度一致，基于度的启发式搜索无效
+    let &max_len = adj_cnt.iter().max().unwrap();
+    // 下面进行并行搜索
+    // 并行状态
+    struct SearchState {
+        end: Arc<AtomicBool>,
+        max_clique: Arc<Mutex<Vec<usize>>>,
+    }
+    let state = SearchState {
+        end: Arc::new(AtomicBool::new(false)),
+        max_clique: Arc::new(Mutex::new(Vec::new())),
+    };
+    // 事实上，选择从46开始搜，并行都不需要 :)
+    let num_threads = available_parallelism().unwrap().get().max(32);
+    (0..num_threads).into_par_iter().for_each(|id| {
+        let mut clique = Vec::new();
+        let mut local_max_clique = Vec::new();
+        find_max_clique(
+            id,
+            &mut clique,
+            &adj,
+            &adj_cnt,
+            adj_cnt.len(),
+            &mut local_max_clique,
+            max_len,
+            &state,
+        );
+
+        {
+            let mut max_clique = state.max_clique.lock().unwrap();
+            if local_max_clique.len() > max_clique.len() {
+                *max_clique = local_max_clique.clone();
+            }
+            if local_max_clique.len() >= max_len {
+                state.end.store(true, Ordering::Relaxed);
+            }
+        }
+    });
+    let mut res = {
+        let mut tmp = Vec::new();
+        let max_clique = state.max_clique.lock().unwrap();
+        for &i in max_clique.iter() {
+            tmp.push(pool.name(i).unwrap().clone());
+        }
+        tmp
+    };
     res.sort();
 
     res.join(",")
