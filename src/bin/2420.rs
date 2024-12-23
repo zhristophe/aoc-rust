@@ -21,9 +21,9 @@ fn read(idx: usize) -> Vec<Vec<char>> {
 #.#.#.#.#.#.###
 #...#...#...###
 ###############
-"
-        .trim(),
-    ][idx];
+",
+    ][idx]
+        .trim();
 
     {
         let tmp = input.lines().map(|s| s.chars().collect()).collect();

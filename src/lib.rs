@@ -12,6 +12,8 @@ use crossterm::{
     terminal::{self, ClearType},
 };
 
+pub mod graph;
+pub mod grid;
 pub mod prelude;
 
 pub fn read_input(src_path: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -576,6 +578,10 @@ impl NamePool {
 
     pub fn get(&self, id: usize) -> Option<&String> {
         self.pool.get(id)
+    }
+
+    pub fn len(&self) -> usize {
+        self.pool.len()
     }
 }
 
