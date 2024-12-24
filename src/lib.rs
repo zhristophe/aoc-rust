@@ -91,6 +91,13 @@ impl NamePool {
         }
     }
 
+    pub fn with_capacity(capacity: usize) -> Self {
+        NamePool {
+            map: HashMap::with_capacity(capacity),
+            pool: Vec::with_capacity(capacity),
+        }
+    }
+
     pub fn id(&mut self, name: impl AsRef<str>) -> usize {
         let name = name.as_ref().to_string();
         self.map
@@ -103,12 +110,29 @@ impl NamePool {
             .clone()
     }
 
-    pub fn name(&self, id: usize) -> Option<&String> {
-        self.pool.get(id)
+    pub fn get_id(&self, name: impl AsRef<str>) -> Option<usize> {
+        self.map.get(name.as_ref()).cloned()
+    }
+
+    pub fn name(&self, id: usize) -> Option<&str> {
+        self.pool.get(id).map(|s| s.as_str())
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = &str> {
+        self.pool.iter().map(|s| s.as_str())
     }
 
     pub fn len(&self) -> usize {
         self.pool.len()
+    }
+
+    pub fn contains(&self, name: impl AsRef<str>) -> bool {
+        self.map.contains_key(name.as_ref())
+    }
+
+    pub fn reserve(&mut self, n: usize) {
+        self.map.reserve(n);
+        self.pool.reserve(n);
     }
 }
 

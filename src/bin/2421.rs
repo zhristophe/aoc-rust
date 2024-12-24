@@ -21,13 +21,22 @@ fn read(idx: usize) -> Vec<Vec<char>> {
     }
 }
 
-fn seq_for_seq(tgt: Vec<char>, map: &Grid<char>) -> Vec<char> {
+fn dir2char(dir: Direction) -> char {
+    match dir {
+        Direction::Up => '^',
+        Direction::Down => 'v',
+        Direction::Left => '<',
+        Direction::Right => '>',
+    }
+}
+
+/// 返回从起点到终点的路径的所有可能性
+fn seq_for_seq(tgt: Vec<char>, map: &Grid<char>) -> Vec<Vec<Vec<char>>> {
     let mut cur = map.find_point('A').unwrap();
     let mut res = Vec::new();
     for tgt in tgt {
         let tgt = map.find_point(tgt).unwrap();
-        let mut seq = VecDeque::new();
-        let mut steps = Grid::new(map.size(), Direction::Up);
+        let mut cache = Grid::new(map.size(), (usize::MAX, HashSet::new()));
         map.bfs_iter(cur)
             .skip_tiles(&' ')
             .on_discover(|old, new| {
@@ -40,25 +49,43 @@ fn seq_for_seq(tgt: Vec<char>, map: &Grid<char>) -> Vec<char> {
                     (0, 1) => Direction::Right,
                     _ => unreachable!(),
                 };
-                steps.set(new, dir);
+                let new_step = cache.get(old).unwrap().0 + 1;
+                cache.get_mut(new).map(|(old_step, dirs)| {
+                    if new_step < *old_step {
+                        *old_step = new_step;
+                        dirs.clear();
+                        dirs.insert(dir);
+                    } else if new_step == *old_step {
+                        dirs.insert(dir);
+                    }
+                });
             })
             .run_with_target(tgt);
 
-        let mut tmp = tgt;
-        while tmp != cur {
-            let &step = steps.get(tmp).unwrap();
-            seq.push_front(match step {
-                Direction::Up => '^',
-                Direction::Down => 'v',
-                Direction::Left => '<',
-                Direction::Right => '>',
-            });
-            tmp = tmp + step.turn_around();
+        let mut res = Vec::new();
+
+        fn get_paths_to(
+            from: Point,
+            to: Point,
+            cache: Grid<(usize, HashSet<Direction>)>,
+        ) -> Vec<Vec<char>> {
+            let mut res = Vec::new();
+            if from == to {
+                return vec![vec![]];
+            }
+
+            for &dir in &cache.get(from).unwrap().1 {
+                let paths = get_paths_to(from + dir.turn_around(), to, cache.clone());
+                for mut path in paths {
+                    path.push(dir2char(dir));
+                    res.push(path);
+                }
+            }
+
+            res
         }
 
-        res.extend(seq);
-
-        cur = tgt;
+        res.push(get_paths_to(tgt, cur, cache));
     }
 
     res
@@ -77,14 +104,23 @@ fn part1(idx: usize) -> String {
     let map2 = vec![vec![' ', '^', 'A'], vec!['<', 'v', '>']];
     let (map1, map2) = (Grid::from(map1), Grid::from(map2));
     for input in input {
-        let tgt = input;
-        let seq1 = seq_for_seq(tgt, &map2);
-        let seq2 = seq_for_seq(seq1, &map1);
-        let seq3 = seq_for_seq(seq2, &map1);
+        // let get_best_paths = ||
 
-        dbg!(seq3);
+        // let ans_len = |mut input: Vec<char>| {
+        //     input = seq_for_seq(input, &map1);
+        //     input = seq_for_seq(input, &map2);
+        //     input = seq_for_seq(input, &map2);
+        //     input.len()
+        // };
+        // let num = input[..input.len() - 1]
+        //     .iter()
+        //     .collect::<String>()
+        //     .parse::<usize>()
+        //     .unwrap();
+        // res += dbg!(ans_len(input.clone())) * dbg!(num);
+        // break;
     }
-    0.to_string()
+    res.to_string()
 }
 
 /// 基本一样，只是搜索20步
