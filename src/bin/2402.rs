@@ -54,7 +54,7 @@ fn part2(idx: usize) -> String {
     let len = input.len();
     let mut res = len;
 
-    fn is_safe(a: isize, b: isize, c: isize, input: &Vec<i32>) -> bool {
+    fn is_safe(a: isize, b: isize, c: isize, input: &[i32]) -> bool {
         if a < 0 || c as usize >= input.len() {
             return true;
         }
@@ -91,18 +91,18 @@ fn part2(idx: usize) -> String {
             first = false;
             // 只有三个删除选择，j,j+1,j+2
             if is_safe(j - 1, j + 1, j + 2, input) && is_safe(j + 1, j + 2, j + 3, input) {
-                j = j + 1;
+                j += 1;
                 continue;
             }
             if is_safe(j - 1, j, j + 2, input) && is_safe(j, j + 2, j + 3, input) {
-                j = j + 2;
+                j += 2;
                 continue;
             }
             if is_safe(j - 1, j, j + 1, input)
                 && is_safe(j, j + 1, j + 3, input)
                 && is_safe(j + 1, j + 3, j + 4, input)
             {
-                j = j + 3;
+                j += 3;
                 continue;
             }
         }

@@ -102,7 +102,7 @@ fn part2(idx: usize) -> String {
         .skip_tiles(&'#')
         .on_visit(|cur| {
             let &cur_step = steps.get(cur).unwrap();
-            for i in -20..=20 as isize {
+            for i in -20..=20isize {
                 let max_j = 20 - i.abs();
                 for j in -max_j..=max_j {
                     let cheat = cur + Point::new(i, j);

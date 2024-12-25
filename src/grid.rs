@@ -44,8 +44,23 @@ impl<T> Grid<T> {
             .get_mut(index.j as usize)
     }
 
-    pub fn set(&mut self, index: Point, value: T) {
-        self.get_mut(index).map(|v| *v = value);
+    pub fn set(&mut self, pt: Point, value: T) {
+        if let Some(v) = self.get_mut(pt) {
+            *v = value;
+        }
+    }
+
+    pub fn set_with(&mut self, pt: Point, f: impl FnOnce(&mut T)) {
+        if let Some(v) = self.get_mut(pt) {
+            f(v);
+        }
+    }
+
+    pub fn contains(&self, pt: Point) -> bool {
+        pt.i >= 0
+            && pt.i < self.inner.len() as isize
+            && pt.j >= 0
+            && pt.j < self.inner[0].len() as isize
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
@@ -464,6 +479,20 @@ impl Direction {
             Direction::Left => v[2] = val,
             Direction::Right => v[3] = val,
         };
+    }
+}
+
+impl TryFrom<Point> for Direction {
+    type Error = ();
+
+    fn try_from(pt: Point) -> Result<Self, Self::Error> {
+        match (pt.i, pt.j) {
+            (i, 0) if i < 0 => Ok(Direction::Up),
+            (i, 0) if i > 0 => Ok(Direction::Down),
+            (0, j) if j < 0 => Ok(Direction::Left),
+            (0, j) if j > 0 => Ok(Direction::Right),
+            _ => Err(()),
+        }
     }
 }
 

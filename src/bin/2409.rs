@@ -55,8 +55,7 @@ fn debug_files_pos(files_pos: &[usize], input: &[u8]) -> String {
 
     let mut res = String::new();
     let mut last_pos = 0usize;
-    for i in 0..idx_pos_vec.len() {
-        let (file_id, file_pos) = idx_pos_vec[i];
+    for (file_id, file_pos) in idx_pos_vec {
         let file_size = input[file_id * 2] as usize;
         res += &".".repeat(file_pos - last_pos);
         res += &file_id.to_string().repeat(file_size);
@@ -107,25 +106,19 @@ fn exec2(input: &[u8]) -> String {
 
         let mut find_file_and_space = || {
             for i in (0..last_id).rev() {
-                // let (file_id, file_pos) = idx_pos_vec[i];
                 let file_id = i;
                 let file_pos = files_pos[file_id];
                 let file_size = input[file_id * 2] as usize;
-                // dbg!(file_id, file_pos, file_size);
 
-                let res = 'outer: loop {
-                    for j in 0..space_pos_len.len() {
-                        let (space_pos, space_size) = space_pos_len[j];
-                        // dbg!(j, space_pos, space_size);
+                let res = space_pos_len
+                    .iter()
+                    .find(|&&(space_pos, space_size)| {
                         if space_pos > file_pos {
-                            break 'outer None;
+                            return false;
                         }
-                        if space_size >= file_size {
-                            break 'outer Some(space_pos);
-                        }
-                    }
-                    break None;
-                };
+                        space_size >= file_size
+                    })
+                    .map(|&(space_pos, _)| space_pos);
 
                 if let Some(space_pos) = res {
                     last_id = file_id;

@@ -37,11 +37,10 @@ fn mix_and_prune(val: usize, old: usize) -> usize {
 }
 
 /// 64 = 2 ^ 6, 32 = 2 ^ 5, 2048 = 2 ^ 11
-fn next_val(val: usize) -> usize {
-    let val = mix_and_prune(val << 6, val);
-    let val = mix_and_prune(val >> 5, val);
-    let val = mix_and_prune(val << 11, val);
-    val
+fn next_val(mut val: usize) -> usize {
+    val = mix_and_prune(val << 6, val);
+    val = mix_and_prune(val >> 5, val);
+    mix_and_prune(val << 11, val)
 }
 
 /// 简单模拟

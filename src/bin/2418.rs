@@ -61,18 +61,17 @@ fn part1(idx: usize) -> String {
 
     let mut map = Grid::new((x, y), 0);
     let n = if x == 71 { 1024 } else { 12 };
-    for i in 0..n {
-        map.get_mut((bytes[i][1], bytes[i][0]).into())
-            .map(|v| *v += 1);
+    for byte in bytes.iter().take(n) {
+        map.set_with((byte[1], byte[0]).into(), |v| *v += 1);
     }
 
     let mut steps = Grid::new((x, y), usize::MAX);
-    steps.get_mut(stt).map(|v| *v = 0);
+    steps.set(stt, 0);
     map.bfs_iter(stt)
         .only_tiles(&0)
         .on_discover(|old, new| {
             let &old_val = steps.get(old).unwrap();
-            steps.get_mut(new).map(|v| *v = (*v).min(old_val + 1));
+            steps.set_with(new, |v| *v = (*v).min(old_val + 1));
         })
         .run_with_target(end);
 

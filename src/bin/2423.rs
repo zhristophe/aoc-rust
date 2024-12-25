@@ -215,7 +215,7 @@ fn part2(idx: usize) -> String {
         let mut tmp = Vec::new();
         let max_clique = global_state.max_clique.lock().unwrap();
         for &i in max_clique.iter() {
-            tmp.push(pool.name(i).unwrap().clone());
+            tmp.push(pool.name(i).unwrap());
         }
         tmp
     };

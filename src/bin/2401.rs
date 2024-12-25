@@ -4,7 +4,7 @@ fn read(idx: usize) -> Vec<Vec<isize>> {
     let input = read_input(module_path!()).unwrap();
 
     let input = [
-        &input.as_str(),
+        input.as_str(),
         r"
 3   4
 4   3
@@ -19,7 +19,6 @@ fn read(idx: usize) -> Vec<Vec<isize>> {
     {
         input
             .lines()
-            .into_iter()
             .map(|s| {
                 s.split_ascii_whitespace()
                     .map(|s| s.parse().unwrap())

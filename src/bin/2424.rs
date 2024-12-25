@@ -159,7 +159,7 @@ fn part1(idx: usize) -> String {
 /// S    = (A XOR B) XOR Cin
 /// Cout = (A AND B) OR (Cin AND (A XOR B))
 /// 5 * 45 = 225个部件，少了第一位的3个部件，和输入行数一致
-/// 在本题中，只需要检查减法器部件类型是否匹配即可
+/// 在本题中，只需要检查加法器部件类型是否匹配即可
 fn part2(idx: usize) -> String {
     let (pool, _, gates) = read(idx);
 

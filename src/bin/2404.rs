@@ -4,8 +4,8 @@ use std::{fs, path::Path};
 fn exec1(input: &Vec<Vec<char>>) -> String {
     let directions = {
         let mut tmp = Vec::new();
-        for i in -1..=1 as isize {
-            for j in -1..=1 as isize {
+        for i in -1..=1 {
+            for j in -1..=1 {
                 if i != 0 || j != 0 {
                     tmp.push((i, j));
                 }
@@ -39,8 +39,7 @@ fn exec1(input: &Vec<Vec<char>>) -> String {
                     continue 'd;
                 }
                 let mut cur = (i, j);
-                let mut chars = tgt_str.chars();
-                while let Some(ch) = chars.next() {
+                for ch in tgt_str.chars() {
                     if input[cur.0 as usize][cur.1 as usize] != ch {
                         continue 'd;
                     }

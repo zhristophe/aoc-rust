@@ -36,7 +36,7 @@ fn exec1(input: &[&[u8]]) -> String {
             }
             let mut area = 0usize;
             let mut perimeter = 0isize;
-            let this = input[i as usize][j as usize];
+            let this = input[i][j];
             let (i, j) = (i as i32, j as i32);
             let mut q = VecDeque::new();
             q.push_back((i, j));

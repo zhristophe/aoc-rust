@@ -26,23 +26,17 @@ fn part1(idx: usize) -> String {
         Mul(usize),
         LP,
         RP,
-        LHS(usize),
-        RHS(usize),
+        Lhs(usize),
+        Rhs(usize),
         Com,
         Empty,
     }
 
-    let mut iter = input.chars();
     let mut state = State::Empty;
     let mut lhs = 0;
     let mut rhs = 0;
     let mut res = 0;
-    loop {
-        let ch = if let Some(ch) = iter.next().take() {
-            ch
-        } else {
-            break;
-        };
+    for ch in input.chars() {
         state = match state {
             State::Mul(n) => match ch {
                 'u' if n == 1 => State::Mul(2),
@@ -51,20 +45,20 @@ fn part1(idx: usize) -> String {
                 _ => State::Empty,
             },
             State::LP => match ch {
-                '0'..='9' => State::LHS(ch as usize - '0' as usize),
+                '0'..='9' => State::Lhs(ch as usize - '0' as usize),
                 _ => State::Empty,
             },
-            State::LHS(n) => match ch {
-                '0'..='9' if n < 1000 => State::LHS(n * 10 + ch as usize - '0' as usize),
+            State::Lhs(n) => match ch {
+                '0'..='9' if n < 1000 => State::Lhs(n * 10 + ch as usize - '0' as usize),
                 ',' => State::Com,
                 _ => State::Empty,
             },
             State::Com => match ch {
-                '0'..='9' => State::RHS(ch as usize - '0' as usize),
+                '0'..='9' => State::Rhs(ch as usize - '0' as usize),
                 _ => State::Empty,
             },
-            State::RHS(n) => match ch {
-                '0'..='9' if n < 1000 => State::RHS(n * 10 + ch as usize - '0' as usize),
+            State::Rhs(n) => match ch {
+                '0'..='9' if n < 1000 => State::Rhs(n * 10 + ch as usize - '0' as usize),
                 ')' => State::RP,
                 _ => State::Empty,
             },
@@ -74,8 +68,8 @@ fn part1(idx: usize) -> String {
             },
         };
         match state {
-            State::LHS(n) => lhs = n,
-            State::RHS(n) => rhs = n,
+            State::Lhs(n) => lhs = n,
+            State::Rhs(n) => rhs = n,
             State::RP => {
                 res += lhs * rhs;
                 lhs = 0;

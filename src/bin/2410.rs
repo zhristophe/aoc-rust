@@ -112,7 +112,7 @@ fn main() {
 
     let file = Path::new("data/2410/input");
     let input = fs::read_to_string(file).unwrap();
-    let input = input.lines().into_iter().collect::<Vec<_>>();
+    let input = input.lines().collect::<Vec<_>>();
 
     let input = input
         .iter()
