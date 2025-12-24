@@ -26,7 +26,9 @@ fn read(idx: usize) -> Vec<usize> {
     ][idx]
         .trim();
 
-    { input.lines().map(|s| s.parse().unwrap()).collect() }
+    {
+        input.lines().map(|s| s.parse().unwrap()).collect()
+    }
 }
 
 #[inline]

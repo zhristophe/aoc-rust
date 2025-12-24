@@ -1,4 +1,4 @@
-use utils::{parse::ParseExt, prelude::*};
+use utils::prelude::*;
 
 fn read(idx: usize) -> Vec<i32> {
     let input = read_input(module_path!()).unwrap();
@@ -24,7 +24,7 @@ L82
         .lines()
         .map(|s| {
             let s = s.as_bytes();
-            let d = s[1..].to_i32_unsafe();
+            let d = s[1..].to_u32_unsafe() as i32;
             if s[0] == b'L' {
                 -d
             } else {
