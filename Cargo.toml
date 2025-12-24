@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 
-members = ["build", "utils", "year2023", "year2024"]
+members = ["build", "utils", "year2023", "year2024", "year2025"]
 
 [workspace.dependencies]
 crossterm = "0.29.0"
