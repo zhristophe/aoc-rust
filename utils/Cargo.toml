@@ -1,0 +1,10 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossterm = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true, features = ["blocking"] }
+tokio = { workspace = true, features = ["full"] }

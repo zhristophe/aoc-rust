@@ -1,15 +1,13 @@
-[package]
-name = "aoc"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "3"
 
-[dependencies]
-crossterm = "0.28" 
-linked-list = "0.1"
-num-bigint = "0.4"
-# petgraph = "0.6"
-rayon = "1.5" 
-regex = "1.5"  
-reqwest = {version = "0.12" , features = ["blocking"] }
-tokio = { version = "1.42", features = ["full"] }
-# z3 = "0.12.1"
+members = ["build", "utils", "year2023", "year2024"]
+
+[workspace.dependencies]
+crossterm = "0.29.0"
+glob = "0.3.1"
+num-bigint = "0.4.6"
+rayon = "1.11.0"
+regex = "1.9.6"
+reqwest = "0.12.28"
+tokio = "1.48.0"
