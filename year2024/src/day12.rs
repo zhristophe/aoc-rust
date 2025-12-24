@@ -28,7 +28,7 @@ MMMISSJEEE
         .collect::<Vec<_>>()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let row = input.len();
     let col = input[0].len();
@@ -96,7 +96,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let row = input.len();
     let col = input[0].len();

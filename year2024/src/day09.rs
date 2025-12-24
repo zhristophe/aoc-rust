@@ -13,7 +13,7 @@ fn read(idx: usize) -> Vec<u8> {
         .collect::<Vec<u8>>()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let mut input = read(idx);
     // 硬算！
     let len = input.len();
@@ -77,7 +77,7 @@ fn debug_files_pos(files_pos: &[usize], input: &[u8]) -> String {
     res
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     // rust的链表，谁用谁知道 :)
     let len = input.len();

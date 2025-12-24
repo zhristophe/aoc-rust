@@ -79,7 +79,7 @@ fn read(idx: usize) -> (Vec<Vec<i32>>, Vec<Vec<i32>>) {
 }
 
 /// easy
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let (locks, keys) = read(idx);
 
     let mut res = 0;

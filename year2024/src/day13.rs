@@ -63,7 +63,7 @@ Prize: X=18641, Y=10279",
     res
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     // 枚举！
     let mut res = 0;
@@ -86,7 +86,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let offset = 10000000000000;
     let mut res = 0;

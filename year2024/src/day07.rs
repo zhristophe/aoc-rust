@@ -31,7 +31,7 @@ fn read(idx: usize) -> Vec<(usize, Vec<usize>)> {
         .collect()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let mut res = 0;
     for (tgt, opds) in input {
@@ -58,7 +58,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let mut res = 0;
     for (tgt, opds) in input {

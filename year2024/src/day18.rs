@@ -54,7 +54,7 @@ fn read(idx: usize) -> (Vec<Vec<usize>>, usize, usize) {
 }
 
 /// 简简单单BFS
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let (bytes, x, y) = read(idx);
     let stt = Point::from((0, 0));
     let end = Point::from((x - 1, y - 1));
@@ -81,7 +81,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// BFS + 二分查找
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let (bytes, x, y) = read(idx);
     let stt = Point::from((0, 0));
     let end = Point::from((x - 1, y - 1));

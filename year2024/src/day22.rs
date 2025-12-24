@@ -26,9 +26,7 @@ fn read(idx: usize) -> Vec<usize> {
     ][idx]
         .trim();
 
-    {
-        input.lines().map(|s| s.parse().unwrap()).collect()
-    }
+    { input.lines().map(|s| s.parse().unwrap()).collect() }
 }
 
 #[inline]
@@ -44,7 +42,7 @@ fn next_val(mut val: usize) -> usize {
 }
 
 /// 简单模拟
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
 
     let mut res = 0;
@@ -59,7 +57,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// 暴力求解
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
 
     fn change_id(change: &[isize]) -> isize {

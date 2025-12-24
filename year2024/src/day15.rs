@@ -56,7 +56,7 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
     (map, seq)
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let (mut map, seq) = (Grid::from(input.0), input.1);
 
@@ -119,7 +119,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let (mut map, seq) = (
         {

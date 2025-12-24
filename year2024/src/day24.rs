@@ -110,7 +110,7 @@ tnw OR pbm -> gnj
 }
 
 /// 模拟
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let (mut pool, mut wires_val, gates) = read(idx);
 
     let do_op = |in1, in2, op| match op {
@@ -160,7 +160,7 @@ fn part1(idx: usize) -> String {
 /// Cout = (A AND B) OR (Cin AND (A XOR B))
 /// 5 * 45 = 225个部件，少了第一位的3个部件，和输入行数一致
 /// 在本题中，只需要检查加法器部件类型是否匹配即可
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let (pool, _, gates) = read(idx);
 
     // 计数

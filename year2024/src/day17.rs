@@ -117,7 +117,7 @@ fn exec(mut registers: Vec<usize>, program: &Vec<u8>, desired: Option<&Vec<usize
     }
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let (registers, program) = read(idx);
     match exec(registers, &program, None) {
         Res::Output(res) => res,
@@ -159,7 +159,7 @@ fn part2_simple(idx: usize) -> String {
 }
 
 /// 注意到 :)
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let (mut registers, program) = read(idx);
 
     /// 核心: `(A_3 ^ 3 ^ (A >> A_3 ^ 3) ^ 5)_3 = X`

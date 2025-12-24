@@ -50,7 +50,7 @@ fn read(idx: usize) -> Vec<Vec<char>> {
     input.lines().map(|s| s.chars().collect()).collect()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     fn find_point(input: &Vec<Vec<char>>, c: char) -> Point {
         for i in 0..input.len() {
@@ -96,7 +96,7 @@ fn part1(idx: usize) -> String {
     end.get(&score).unwrap().0.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     fn find_point(input: &Vec<Vec<char>>, c: char) -> Point {
         for i in 0..input.len() {

@@ -63,7 +63,7 @@ td-yn
 }
 
 /// 简单遍历
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let map = read(idx);
     // let mut set = HashSet::new();
     let map = {
@@ -123,7 +123,7 @@ fn part1(idx: usize) -> String {
 /// 最简单的回溯，大约要算40s
 /// 并行后只需要0.09s
 /// 但是提升效果不是来自并行而是来自初始值的选择
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let map = read(idx);
     let len = map.len();
     let mut pool = NamePool::new();

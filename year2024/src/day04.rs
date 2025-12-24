@@ -24,7 +24,7 @@ MXMXAXMASX
 }
 
 /// XMAS查找
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
 
     let directions = {
@@ -79,7 +79,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// X-MAS查找
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
 
     macro_rules! get_ch {

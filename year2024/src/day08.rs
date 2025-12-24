@@ -27,7 +27,7 @@ fn read(idx: usize) -> Vec<Vec<char>> {
     input.lines().map(|s| s.chars().collect()).collect()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let map = Grid::from(input);
     let mut ant_map: HashMap<char, Vec<Point>> = HashMap::new();
@@ -65,7 +65,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let map = Grid::from(input);
     let mut ant_map: HashMap<char, Vec<Point>> = HashMap::new();

@@ -52,7 +52,7 @@ fn read(idx: usize) -> (Vec<Vec<i32>>, Vec<Vec<i32>>) {
     (input0, input1)
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let len = 100;
     let mut map = vec![Vec::new(); len];
@@ -75,7 +75,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     // 陷阱：排序规则含有循环，离谱
     // 因此拓扑排序每次都要重排，放弃

@@ -26,7 +26,7 @@ fn read(idx: usize) -> Vec<Vec<u8>> {
         .collect::<Vec<Vec<u8>>>()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let height = input.len();
     let width = input[0].len();
@@ -70,7 +70,7 @@ fn part1(idx: usize) -> String {
     score.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let height = input.len();
     let width = input[0].len();

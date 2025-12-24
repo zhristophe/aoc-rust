@@ -27,7 +27,7 @@ fn read(idx: usize) -> Vec<Vec<i32>> {
         .collect()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
 
     let len = input.len();
@@ -48,7 +48,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
 
     let len = input.len();

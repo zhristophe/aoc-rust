@@ -52,7 +52,7 @@ enum Cube {
     Blue(usize),
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let inputs = read(idx);
 
     let mut res = 0;
@@ -90,7 +90,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let inputs = read(idx);
 
     let mut res = 0;

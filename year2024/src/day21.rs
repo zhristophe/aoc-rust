@@ -86,7 +86,7 @@ fn seq_for_seq(tgt: Vec<char>, map: &Grid<char>) -> Vec<char> {
 /// ^> = <^
 /// <v > v<
 /// v> > >v
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let mut res = 0;
     let map1 = vec![
@@ -118,7 +118,7 @@ fn part1(idx: usize) -> String {
 
 /// 模拟太慢
 /// 记忆化搜索
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let mut res = 0;
     let map1 = vec![

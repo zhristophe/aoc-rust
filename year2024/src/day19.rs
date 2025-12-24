@@ -30,7 +30,7 @@ bbrgwb
 }
 
 /// 简简单单记忆化搜索
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let (towels, desired) = read(idx);
 
     let mut cache = HashSet::new();
@@ -65,7 +65,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// 和part1类似，只是计数
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let (towels, desired) = read(idx);
 
     let mut cache: HashMap<String, usize> = HashMap::new();

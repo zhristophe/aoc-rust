@@ -32,7 +32,7 @@ fn read(idx: usize) -> Vec<Vec<char>> {
 }
 
 /// 先广播步数（bfs），再easy
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let map = read(idx);
     let map = Grid::from(map);
 
@@ -78,7 +78,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// 基本一样，只是搜索20步
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let map = read(idx);
     let map = Grid::from(map);
 

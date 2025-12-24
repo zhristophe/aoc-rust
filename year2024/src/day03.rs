@@ -19,7 +19,7 @@ xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
 }
 
 /// 正则即可，这里简单写个语法解析器
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
 
     enum State {
@@ -83,7 +83,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// 和1差不多，稍微改改
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
 
     // don't和mul没有重复字母

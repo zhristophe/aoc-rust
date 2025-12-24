@@ -50,7 +50,7 @@ p=9,5 v=-3,-3
     res
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
     let max_y = 101;
     let max_x = 103;
@@ -103,7 +103,7 @@ fn part1(idx: usize) -> String {
     res.to_string()
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
     // What is a Christmas tree in hell???
     // 从github上淘来的算法，检测圣诞树边框（wtf???）

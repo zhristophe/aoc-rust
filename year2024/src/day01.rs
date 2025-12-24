@@ -29,7 +29,7 @@ fn read(idx: usize) -> Vec<Vec<isize>> {
 }
 
 /// easy
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let input = read(idx);
 
     let len: usize = input.len();
@@ -53,7 +53,7 @@ fn part1(idx: usize) -> String {
 }
 
 /// easy
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     let input = read(idx);
 
     let len = input.len();

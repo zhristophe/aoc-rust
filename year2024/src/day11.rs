@@ -65,11 +65,11 @@ fn solve(idx: usize, times: usize) -> String {
     res.to_string()
 }
 
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     solve(idx, 25)
 }
 
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     solve(idx, 75)
 }
 

@@ -136,7 +136,7 @@ fn push_button(
 }
 
 /// 模拟
-fn part1(idx: usize) -> String {
+pub fn part1(idx: usize) -> String {
     let (map, mut pool) = read(idx);
 
     let (mut ff, mut cj) = get_init_states(&map);
@@ -237,7 +237,7 @@ fn part2_simple(idx: usize) -> String {
 /// %：数0就行
 /// &：最小公倍数
 /// 广播周期
-fn part2(idx: usize) -> String {
+pub fn part2(idx: usize) -> String {
     // let (map, mut pool) = read(idx);
 
     // let (mut ff, mut cj) = get_init_states(&map);
