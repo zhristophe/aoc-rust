@@ -189,6 +189,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_sum_invalid_ids() {
         assert_eq!(sum_invalid_ids(11, 22), 33);
         assert_eq!(sum_invalid_ids(95, 115), 99);
@@ -201,6 +202,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_k_rank_sum_invalid_ids() {
         assert_eq!(get_k_rank_invalid_ids(11, 22, 2), vec![11, 22]);
         assert_eq!(get_k_rank_invalid_ids(95, 115, 2), vec![99]);

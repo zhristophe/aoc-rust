@@ -12,6 +12,7 @@ use reqwest::{
 };
 use tokio;
 
+pub mod dsu;
 pub mod graph;
 pub mod grid;
 pub mod int_ext;

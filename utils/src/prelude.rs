@@ -5,6 +5,7 @@ pub use regex::Regex;
 pub mod v1 {
     pub use crate::{
         NamePool,
+        dsu::UnionFind,
         grid::{DIRECTIONS, Direction, Grid, Point},
         int_ext::IntegerExt,
         read_input,
