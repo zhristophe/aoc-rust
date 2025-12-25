@@ -123,7 +123,7 @@ pub fn part2(idx: usize) -> String {
     let input = read(idx);
     let (mut map, seq) = (
         {
-            let tmp = input
+            input
                 .0
                 .iter()
                 .map(|v| {
@@ -140,8 +140,7 @@ pub fn part2(idx: usize) -> String {
                         })
                         .collect()
                 })
-                .collect();
-            Grid::from(tmp)
+                .collect::<Grid<_>>()
         },
         input.1,
     );

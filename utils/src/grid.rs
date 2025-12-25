@@ -18,10 +18,6 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn from(inner: Vec<Vec<T>>) -> Self {
-        Grid { inner }
-    }
-
     pub fn size(&self) -> (usize, usize) {
         (self.inner.len(), self.inner[0].len())
     }
@@ -65,6 +61,10 @@ impl<T> Grid<T> {
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.inner.iter().flatten()
+    }
+
+    pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
+        self.inner.iter()
     }
 
     pub fn points(&self) -> MapIter<'_, T> {
@@ -133,6 +133,20 @@ impl<T> Grid<T> {
                 print!("{}", f(&self.inner[i][j]));
             }
             println!();
+        }
+    }
+}
+
+impl<T> From<Vec<Vec<T>>> for Grid<T> {
+    fn from(inner: Vec<Vec<T>>) -> Self {
+        Grid { inner }
+    }
+}
+
+impl<T> FromIterator<Vec<T>> for Grid<T> {
+    fn from_iter<I: IntoIterator<Item = Vec<T>>>(iter: I) -> Self {
+        Grid {
+            inner: iter.into_iter().collect(),
         }
     }
 }
@@ -338,6 +352,75 @@ impl Point {
     /// 超出界限时什么也不做
     pub fn set<T>(self, map: &mut Vec<Vec<T>>, value: T) {
         self.get_mut(map).map(|v| *v = value);
+    }
+
+    /// 8方向邻接点，不检查边界
+    pub fn adjacent(self) -> AdjacentIter<()> {
+        AdjacentIter::new(self, ())
+    }
+
+    /// 8方向邻接点，检查边界
+    pub fn adjacent_in(self, size: (usize, usize)) -> AdjacentIter<(usize, usize)> {
+        AdjacentIter::new(self, size)
+    }
+}
+
+/// 8方向邻接点迭代器，S 为 () 时不检查边界，为 (usize, usize) 时检查
+pub struct AdjacentIter<S> {
+    center: Point,
+    idx: i8,
+    bounds: S,
+}
+
+const ADJACENT_OFFSETS: [(isize, isize); 8] = [
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+];
+
+impl<S> AdjacentIter<S> {
+    fn new(center: Point, bounds: S) -> Self {
+        AdjacentIter {
+            center,
+            idx: 0,
+            bounds,
+        }
+    }
+}
+
+impl Iterator for AdjacentIter<()> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx >= 8 {
+            return None;
+        }
+        let (di, dj) = ADJACENT_OFFSETS[self.idx as usize];
+        self.idx += 1;
+        Some(Point::new(self.center.i + di, self.center.j + dj))
+    }
+}
+
+impl Iterator for AdjacentIter<(usize, usize)> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.idx < 8 {
+            let (di, dj) = ADJACENT_OFFSETS[self.idx as usize];
+            self.idx += 1;
+            let ni = self.center.i + di;
+            let nj = self.center.j + dj;
+            if ni >= 0 && nj >= 0 && (ni as usize) < self.bounds.0 && (nj as usize) < self.bounds.1
+            {
+                return Some(Point::new(ni, nj));
+            }
+        }
+        None
     }
 }
 
