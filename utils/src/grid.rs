@@ -1,9 +1,11 @@
+use core::fmt;
 use std::{
     collections::VecDeque,
+    fmt::Display,
     ops::{Add, Mul, Sub},
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Grid<T> {
     inner: Vec<Vec<T>>,
 }
@@ -65,6 +67,10 @@ impl<T> Grid<T> {
 
     pub fn rows(&self) -> impl Iterator<Item = &Vec<T>> {
         self.inner.iter()
+    }
+
+    pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut Vec<T>> {
+        self.inner.iter_mut()
     }
 
     pub fn points(&self) -> GridPointIter {
@@ -136,6 +142,28 @@ impl<T> Grid<T> {
 impl<T> From<Vec<Vec<T>>> for Grid<T> {
     fn from(inner: Vec<Vec<T>>) -> Self {
         Grid { inner }
+    }
+}
+
+impl From<&str> for Grid<u8> {
+    fn from(s: &str) -> Self {
+        Grid::from(
+            s.lines()
+                .map(|line| line.as_bytes().to_vec())
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl Display for Grid<u8> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for i in 0..self.inner.len() {
+            for j in 0..self.inner[0].len() {
+                write!(f, "{}", self.inner[i][j] as char)?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
     }
 }
 
@@ -330,7 +358,7 @@ impl<T> std::ops::IndexMut<Point> for Grid<T> {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point {
     pub i: isize,
     pub j: isize,
@@ -365,6 +393,26 @@ impl Point {
                 ..self
             },
         }
+    }
+
+    #[inline]
+    pub fn move_left(self) -> Point {
+        self.move_to(Direction::Left)
+    }
+
+    #[inline]
+    pub fn move_right(self) -> Point {
+        self.move_to(Direction::Right)
+    }
+
+    #[inline]
+    pub fn move_up(self) -> Point {
+        self.move_to(Direction::Up)
+    }
+
+    #[inline]
+    pub fn move_down(self) -> Point {
+        self.move_to(Direction::Down)
     }
 
     pub fn get<T>(self, grid: &Vec<Vec<T>>) -> Option<&T> {
@@ -523,7 +571,7 @@ pub const DIRECTIONS: [Direction; 4] = [
     Direction::Right,
 ];
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
     Up,
     Down,
