@@ -67,12 +67,8 @@ impl<T> Grid<T> {
         self.inner.iter()
     }
 
-    pub fn points(&self) -> MapIter<'_, T> {
-        MapIter {
-            row: 0,
-            col: -1,
-            map: self,
-        }
+    pub fn points(&self) -> GridPointIter {
+        GridPointIter::new(self.size())
     }
 
     pub fn find_point(&self, c: T) -> Option<Point>
@@ -155,7 +151,7 @@ pub struct BfsIter<'a, T> {
     queue: VecDeque<Point>,
     visited: Grid<bool>,
     discovered: Grid<bool>,
-    map: &'a Grid<T>,
+    grid: &'a Grid<T>,
 
     visit_filter: Option<Box<dyn Fn(Point) -> bool + 'a>>,
     discovery_handler: Option<Box<dyn FnMut(Point, Point) + 'a>>,
@@ -163,12 +159,12 @@ pub struct BfsIter<'a, T> {
 }
 
 impl<'a, T> BfsIter<'a, T> {
-    fn new(map: &'a Grid<T>, start: Point) -> Self {
+    fn new(grid: &'a Grid<T>, start: Point) -> Self {
         BfsIter {
             queue: VecDeque::from([start]),
-            visited: Grid::new(map.size(), false),
-            discovered: Grid::new(map.size(), false),
-            map,
+            visited: Grid::new(grid.size(), false),
+            discovered: Grid::new(grid.size(), false),
+            grid,
 
             visit_filter: None,
             discovery_handler: None,
@@ -189,7 +185,7 @@ impl<'a, T> BfsIter<'a, T> {
     where
         T: PartialEq<T> + Clone,
     {
-        self.visit_filter = Some(Box::new(|pt| self.map.get(pt) != Some(tile)));
+        self.visit_filter = Some(Box::new(|pt| self.grid.get(pt) != Some(tile)));
         self
     }
 
@@ -197,7 +193,7 @@ impl<'a, T> BfsIter<'a, T> {
     where
         T: PartialEq<T> + Clone,
     {
-        self.visit_filter = Some(Box::new(|pt| self.map.get(pt) == Some(tile)));
+        self.visit_filter = Some(Box::new(|pt| self.grid.get(pt) == Some(tile)));
         self
     }
 
@@ -244,7 +240,7 @@ impl<'a, T> BfsIter<'a, T> {
     }
 
     pub fn next_val(&mut self) -> Option<&T> {
-        self.next().and_then(|pt| self.map.get(pt))
+        self.next().and_then(|pt| self.grid.get(pt))
     }
 }
 
@@ -260,7 +256,7 @@ impl<'a, T> Iterator for BfsIter<'a, T> {
             for dir in DIRECTIONS {
                 let next = cur + dir;
 
-                if self.map.get(next).is_none() {
+                if self.grid.get(next).is_none() {
                     continue;
                 }
 
@@ -285,27 +281,52 @@ impl<'a, T> Iterator for BfsIter<'a, T> {
     }
 }
 
-pub struct MapIter<'a, T> {
+/// 遍历所有点的迭代器，不借用 Grid
+pub struct GridPointIter {
     row: isize,
     col: isize,
-    map: &'a Grid<T>,
+    size: (usize, usize),
 }
 
-impl<'a, T> Iterator for MapIter<'a, T> {
+impl GridPointIter {
+    pub fn new(size: (usize, usize)) -> Self {
+        GridPointIter {
+            row: 0,
+            col: -1,
+            size,
+        }
+    }
+}
+
+impl Iterator for GridPointIter {
     type Item = Point;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.col += 1;
-        if self.col >= self.map.inner[0].len() as isize {
+        if self.col >= self.size.1 as isize {
             self.col = 0;
             self.row += 1;
         }
 
-        if self.row == self.map.inner.len() as isize {
+        if self.row >= self.size.0 as isize {
             None
         } else {
             Some(Point::new(self.row, self.col))
         }
+    }
+}
+
+impl<T> std::ops::Index<Point> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, pt: Point) -> &Self::Output {
+        &self.inner[pt.i as usize][pt.j as usize]
+    }
+}
+
+impl<T> std::ops::IndexMut<Point> for Grid<T> {
+    fn index_mut(&mut self, pt: Point) -> &mut Self::Output {
+        &mut self.inner[pt.i as usize][pt.j as usize]
     }
 }
 
@@ -318,6 +339,11 @@ pub struct Point {
 impl Point {
     pub fn new(i: isize, j: isize) -> Self {
         Point { i, j }
+    }
+
+    /// 从 (0,0) 遍历到 (self.i, self.j)，不包含边界
+    pub fn iter_to(self) -> GridPointIter {
+        GridPointIter::new((self.i as usize, self.j as usize))
     }
 
     pub fn move_to(self, direction: Direction) -> Point {
@@ -341,17 +367,17 @@ impl Point {
         }
     }
 
-    pub fn get<T>(self, map: &Vec<Vec<T>>) -> Option<&T> {
-        map.get(self.i as usize)?.get(self.j as usize)
+    pub fn get<T>(self, grid: &Vec<Vec<T>>) -> Option<&T> {
+        grid.get(self.i as usize)?.get(self.j as usize)
     }
 
-    pub fn get_mut<T>(self, map: &mut Vec<Vec<T>>) -> Option<&mut T> {
-        map.get_mut(self.i as usize)?.get_mut(self.j as usize)
+    pub fn get_mut<T>(self, grid: &mut Vec<Vec<T>>) -> Option<&mut T> {
+        grid.get_mut(self.i as usize)?.get_mut(self.j as usize)
     }
 
     /// 超出界限时什么也不做
-    pub fn set<T>(self, map: &mut Vec<Vec<T>>, value: T) {
-        self.get_mut(map).map(|v| *v = value);
+    pub fn set<T>(self, grid: &mut Vec<Vec<T>>, value: T) {
+        self.get_mut(grid).map(|v| *v = value);
     }
 
     /// 8方向邻接点，不检查边界
