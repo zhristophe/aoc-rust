@@ -507,6 +507,15 @@ impl From<(usize, usize)> for Point {
     }
 }
 
+impl From<(i64, i64)> for Point {
+    fn from((x, y): (i64, i64)) -> Self {
+        Point {
+            i: x as isize,
+            j: y as isize,
+        }
+    }
+}
+
 impl Add for Point {
     type Output = Self;
 
