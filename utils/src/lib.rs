@@ -219,6 +219,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    #[ignore = "需要 cookie 文件，CI 中跳过"]
     async fn test_download_input() {
         let text = download_input("2025", "01").await.unwrap();
         println!("{}", text);
