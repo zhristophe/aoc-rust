@@ -6,6 +6,9 @@ members = ["build", "utils", "year2023", "year2024", "year2025"]
 [workspace.dependencies]
 crossterm = "0.29.0"
 glob = "0.3.1"
+good_lp = { version = "1.14.2", default-features = false, features = [
+    "microlp",
+] }
 num-bigint = "0.4.6"
 rayon = "1.11.0"
 regex = "1.9.6"

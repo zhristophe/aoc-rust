@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 utils = { path = "../utils" }
+good_lp = { workspace = true }
 
 [build-dependencies]
 build = { path = "../build" }

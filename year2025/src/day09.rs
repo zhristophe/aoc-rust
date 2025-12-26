@@ -49,7 +49,7 @@ pub fn part1(idx: usize) -> i64 {
 /// 给定连续封闭曲线围成的图形A和凸多边形B，则：
 /// B在A内部 <=> B的边界在A内部。
 ///
-/// 证明: 必要性显然，充分性反证法易证。
+/// 证明: 充分性显然，必要性反证法易证。
 pub fn part2(idx: usize) -> i64 {
     /// 按x向边过滤矩形
     fn filter_rects(tiles: &[(i64, i64)], rects: &mut HashSet<(usize, usize)>) {
