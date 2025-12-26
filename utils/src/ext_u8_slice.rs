@@ -43,3 +43,42 @@ impl U8SliceExt for [u8] {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_string_unsafe() {
+        assert_eq!(b"hello".to_string_unsafe(), "hello");
+        assert_eq!(b"".to_string_unsafe(), "");
+    }
+
+    #[test]
+    fn test_to_u32_unsafe() {
+        assert_eq!(b"123".to_u32_unsafe(), 123);
+        assert_eq!(b"0".to_u32_unsafe(), 0);
+        assert_eq!(b"999999".to_u32_unsafe(), 999999);
+    }
+
+    #[test]
+    fn test_to_u64_unsafe() {
+        assert_eq!(b"12345678901234".to_u64_unsafe(), 12345678901234);
+    }
+
+    #[test]
+    fn test_split_by_byte() {
+        let s = b"a,b,c";
+        let v: Vec<_> = s.split_by_byte(b',').collect();
+        assert_eq!(v, vec![b"a".as_slice(), b"b".as_slice(), b"c".as_slice()]);
+    }
+
+    #[test]
+    fn test_splite_once() {
+        assert_eq!(
+            b"a-b".splite_once(b'-'),
+            Some((b"a".as_slice(), b"b".as_slice()))
+        );
+        assert_eq!(b"abc".splite_once(b'-'), None);
+    }
+}

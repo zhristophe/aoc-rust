@@ -1,5 +1,6 @@
-pub trait IntegerExt {
+pub trait IntegerExt: Copy {
     fn digit_count(&self) -> u32;
+    fn as_isize(self) -> isize;
 }
 
 trait UnsignedAbs {
@@ -31,6 +32,10 @@ macro_rules! impl_int_ext {
                         self.unsigned_abs().ilog10() + 1
                     }
                 }
+
+                fn as_isize(self) -> isize {
+                    self as isize
+                }
             }
         )*
     }
@@ -45,7 +50,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_digits() {
+    fn test_digit_count() {
         assert_eq!(0_i32.digit_count(), 1);
         assert_eq!(5_i32.digit_count(), 1);
         assert_eq!(10_usize.digit_count(), 2);

@@ -5,11 +5,11 @@ pub use regex::Regex;
 pub mod v1 {
     pub use crate::{
         NamePool,
-        dsu::UnionFind,
+        ext_int::IntegerExt,
+        ext_u8_slice::U8SliceExt,
         grid::{DIRECTIONS, Direction, Grid, Point},
-        int_ext::IntegerExt,
         read_input,
-        u8_slice::U8SliceExt,
+        uf::UnionFind,
     };
 }
 

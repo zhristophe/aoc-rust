@@ -12,12 +12,11 @@ use reqwest::{
 };
 use tokio;
 
-pub mod dsu;
-pub mod graph;
+pub mod ext_int;
+pub mod ext_u8_slice;
 pub mod grid;
-pub mod int_ext;
 pub mod prelude;
-pub mod u8_slice;
+pub mod uf;
 
 pub use prelude::v1::*;
 

@@ -1,9 +1,7 @@
-use core::fmt;
-use std::{
-    collections::VecDeque,
-    fmt::Display,
-    ops::{Add, Mul, Sub},
-};
+use core::{fmt, ops};
+use std::collections::VecDeque;
+
+use crate::ext_int::IntegerExt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grid<T> {
@@ -155,7 +153,7 @@ impl From<&str> for Grid<u8> {
     }
 }
 
-impl Display for Grid<u8> {
+impl fmt::Display for Grid<u8> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for i in 0..self.inner.len() {
             for j in 0..self.inner[0].len() {
@@ -344,16 +342,16 @@ impl Iterator for GridPointIter {
     }
 }
 
-impl<T> std::ops::Index<Point> for Grid<T> {
+impl<T, I: Into<Point>> ops::Index<I> for Grid<T> {
     type Output = T;
-
-    fn index(&self, pt: Point) -> &Self::Output {
+    fn index(&self, pt: I) -> &Self::Output {
+        let pt = pt.into();
         &self.inner[pt.i as usize][pt.j as usize]
     }
 }
-
-impl<T> std::ops::IndexMut<Point> for Grid<T> {
-    fn index_mut(&mut self, pt: Point) -> &mut Self::Output {
+impl<T, I: Into<Point>> ops::IndexMut<I> for Grid<T> {
+    fn index_mut(&mut self, pt: I) -> &mut Self::Output {
+        let pt = pt.into();
         &mut self.inner[pt.i as usize][pt.j as usize]
     }
 }
@@ -498,25 +496,16 @@ impl Iterator for AdjacentIter<(usize, usize)> {
     }
 }
 
-impl From<(usize, usize)> for Point {
-    fn from((x, y): (usize, usize)) -> Self {
+impl<T: IntegerExt> From<(T, T)> for Point {
+    fn from((x, y): (T, T)) -> Self {
         Point {
-            i: x as isize,
-            j: y as isize,
+            i: x.as_isize(),
+            j: y.as_isize(),
         }
     }
 }
 
-impl From<(i64, i64)> for Point {
-    fn from((x, y): (i64, i64)) -> Self {
-        Point {
-            i: x as isize,
-            j: y as isize,
-        }
-    }
-}
-
-impl Add for Point {
+impl ops::Add for Point {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -527,7 +516,7 @@ impl Add for Point {
     }
 }
 
-impl Add<Direction> for Point {
+impl ops::Add<Direction> for Point {
     type Output = Self;
 
     fn add(self, rhs: Direction) -> Self::Output {
@@ -535,7 +524,7 @@ impl Add<Direction> for Point {
     }
 }
 
-impl Sub for Point {
+impl ops::Sub for Point {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -546,7 +535,7 @@ impl Sub for Point {
     }
 }
 
-impl Sub<Direction> for Point {
+impl ops::Sub<Direction> for Point {
     type Output = Self;
 
     fn sub(self, rhs: Direction) -> Self::Output {
@@ -554,7 +543,7 @@ impl Sub<Direction> for Point {
     }
 }
 
-impl Mul for Point {
+impl ops::Mul for Point {
     type Output = isize;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -562,13 +551,13 @@ impl Mul for Point {
     }
 }
 
-impl Mul<isize> for Point {
+impl<T: IntegerExt> ops::Mul<T> for Point {
     type Output = Self;
 
-    fn mul(self, rhs: isize) -> Self::Output {
+    fn mul(self, rhs: T) -> Self::Output {
         Point {
-            i: self.i * rhs,
-            j: self.j * rhs,
+            i: self.i * rhs.as_isize(),
+            j: self.j * rhs.as_isize(),
         }
     }
 }
@@ -662,10 +651,95 @@ impl TryFrom<Point> for Direction {
     }
 }
 
-impl Mul<isize> for Direction {
+impl ops::Mul<isize> for Direction {
     type Output = Point;
 
     fn mul(self, rhs: isize) -> Self::Output {
         self.as_pt() * rhs
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grid_basic() {
+        let grid: Grid<i32> = Grid::new((3, 4), 0);
+        assert_eq!(grid.size(), (3, 4));
+        assert_eq!(grid.n_rows(), 3);
+        assert_eq!(grid.n_cols(), 4);
+    }
+
+    #[test]
+    fn test_grid_index() {
+        let mut grid: Grid<i32> = Grid::new((2, 2), 0);
+        grid[Point::from((0, 1))] = 5;
+        assert_eq!(grid[Point::from((0, 1))], 5);
+        assert_eq!(grid[Point::from((0, 0))], 0);
+    }
+
+    #[test]
+    fn test_grid_from_str() {
+        let grid: Grid<u8> = "ab\ncd".into();
+        assert_eq!(grid.size(), (2, 2));
+        assert_eq!(grid[Point::from((0, 0))], b'a');
+        assert_eq!(grid[Point::from((1, 1))], b'd');
+    }
+
+    #[test]
+    fn test_point_from() {
+        let p = Point::from((1, 2));
+        assert_eq!(p.i, 1);
+        assert_eq!(p.j, 2);
+        let p2 = Point::from((0_i32, 0_i32));
+        assert_eq!(p2.i, 0);
+    }
+
+    #[test]
+    fn test_point_mul() {
+        let p = Point::new(2, 3);
+        let p2 = p * 2;
+        assert_eq!(p2, Point::new(4, 6));
+        let p3 = p * 3_i64;
+        assert_eq!(p3, Point::new(6, 9));
+    }
+
+    #[test]
+    fn test_point_adjacent() {
+        let p = Point::new(5, 5);
+        let adj: Vec<_> = p.adjacent().collect();
+        assert_eq!(adj.len(), 8);
+    }
+
+    #[test]
+    fn test_point_adjacent_in() {
+        let p = Point::new(0, 0);
+        let adj: Vec<_> = p.adjacent_in((10, 10)).collect();
+        assert_eq!(adj.len(), 3); // only (0,1), (1,0), (1,1)
+    }
+
+    #[test]
+    fn test_grid_point_iter() {
+        let pts: Vec<_> = GridPointIter::new((2, 3)).collect();
+        assert_eq!(pts.len(), 6);
+        assert_eq!(pts[0], Point::new(0, 0));
+        assert_eq!(pts[5], Point::new(1, 2));
+    }
+
+    #[test]
+    fn test_direction() {
+        let p = Point::new(5, 5);
+        assert_eq!(p.move_up(), Point::new(4, 5));
+        assert_eq!(p.move_down(), Point::new(6, 5));
+        assert_eq!(p.move_left(), Point::new(5, 4));
+        assert_eq!(p.move_right(), Point::new(5, 6));
+    }
+
+    #[test]
+    fn test_direction_turn() {
+        assert_eq!(Direction::Up.turn_right(), Direction::Right);
+        assert_eq!(Direction::Right.turn_right(), Direction::Down);
+        assert_eq!(Direction::Up.turn_around(), Direction::Down);
     }
 }
