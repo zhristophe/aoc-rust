@@ -6,7 +6,7 @@ pub mod v1 {
     pub use crate::{
         bytes_ext::U8SliceExt,
         graph::Graph,
-        grid::{DIRECTIONS, Direction, Grid, Point},
+        grid::{Direction, Grid, GridTransform, Point},
         io::{clear_screen, download_input, read_input, wait_key},
         name_pool::NamePool,
         num_ext::IntegerExt,

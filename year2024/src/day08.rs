@@ -99,7 +99,7 @@ pub fn part2(idx: usize) -> String {
         }
     }
 
-    // is_node.display_by_char(|&c| if c { '#' } else { '.' });
+    // is_node.display_with(|&c| if c { '#' } else { '.' });
 
     let mut res = 0;
     for pt in is_node.points() {

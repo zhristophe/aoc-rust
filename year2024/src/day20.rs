@@ -57,7 +57,7 @@ pub fn part1(idx: usize) -> String {
         .skip_tiles(&'#')
         .on_visit(|cur| {
             let &cur_step = steps.get(cur).unwrap();
-            for d in DIRECTIONS {
+            for d in Direction::all() {
                 let cheat = cur + d * 2;
                 if let Some(&cheat_step) = steps.get(cheat) {
                     if cheat_step == usize::MAX {

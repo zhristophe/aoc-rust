@@ -1,11 +1,16 @@
 use core::{fmt, ops};
-use std::collections::VecDeque;
 
-use crate::num_ext::IntegerExt;
+pub mod iter;
+pub mod point;
+pub mod transform;
 
-#[derive(Debug, Clone, PartialEq)]
+pub use iter::*;
+pub use point::*;
+pub use transform::*;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Grid<T> {
-    inner: Vec<Vec<T>>,
+    pub(crate) inner: Vec<Vec<T>>,
 }
 
 impl<T> Grid<T> {
@@ -15,6 +20,14 @@ impl<T> Grid<T> {
     {
         Grid {
             inner: vec![vec![default; size.1]; size.0],
+        }
+    }
+
+    pub fn new_with(size: (usize, usize), f: impl Fn(Point) -> T) -> Self {
+        Grid {
+            inner: (0..size.0)
+                .map(|i| (0..size.1).map(|j| f(Point::from((i, j)))).collect())
+                .collect(),
         }
     }
 
@@ -112,9 +125,10 @@ impl<T> Grid<T> {
         BfsIter::new(self, start)
     }
 
-    pub fn display_by_char<F>(&self, f: F)
+    pub fn display_with<F, D>(&self, f: F)
     where
-        F: Fn(&T) -> char,
+        F: Fn(&T) -> D,
+        D: fmt::Display,
     {
         for i in 0..self.inner.len() {
             for j in 0..self.inner[0].len() {
@@ -124,13 +138,27 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn display_by_string<F>(&self, f: F)
+    pub fn display_aligned<F>(&self, f: F)
     where
         F: Fn(&T) -> String,
     {
-        for i in 0..self.inner.len() {
-            for j in 0..self.inner[0].len() {
-                print!("{}", f(&self.inner[i][j]));
+        let (rows, cols) = self.size();
+        let mut s_grid = vec![vec![String::new(); cols]; rows];
+        let mut max_width = 0;
+
+        for i in 0..rows {
+            for j in 0..cols {
+                let s = f(&self.inner[i][j]);
+                if s.len() > max_width {
+                    max_width = s.len();
+                }
+                s_grid[i][j] = s;
+            }
+        }
+
+        for i in 0..rows {
+            for j in 0..cols {
+                print!("{:width$} ", s_grid[i][j], width = max_width);
             }
             println!();
         }
@@ -159,9 +187,33 @@ impl fmt::Display for Grid<u8> {
             for j in 0..self.inner[0].len() {
                 write!(f, "{}", self.inner[i][j] as char)?;
             }
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
         Ok(())
+    }
+}
+
+impl Grid<u8> {
+    pub fn display(&self) {
+        println!("{self}");
+    }
+}
+
+impl fmt::Display for Grid<char> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for i in 0..self.inner.len() {
+            for j in 0..self.inner[0].len() {
+                write!(f, "{}", self.inner[i][j])?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
+impl Grid<char> {
+    pub fn display(&self) {
+        println!("{self}");
     }
 }
 
@@ -169,175 +221,6 @@ impl<T> FromIterator<Vec<T>> for Grid<T> {
     fn from_iter<I: IntoIterator<Item = Vec<T>>>(iter: I) -> Self {
         Grid {
             inner: iter.into_iter().collect(),
-        }
-    }
-}
-
-pub struct BfsIter<'a, T> {
-    queue: VecDeque<Point>,
-    visited: Grid<bool>,
-    discovered: Grid<bool>,
-    grid: &'a Grid<T>,
-
-    visit_filter: Option<Box<dyn Fn(Point) -> bool + 'a>>,
-    discovery_handler: Option<Box<dyn FnMut(Point, Point) + 'a>>,
-    visit_handler: Option<Box<dyn FnMut(Point) + 'a>>,
-}
-
-impl<'a, T> BfsIter<'a, T> {
-    fn new(grid: &'a Grid<T>, start: Point) -> Self {
-        BfsIter {
-            queue: VecDeque::from([start]),
-            visited: Grid::new(grid.size(), false),
-            discovered: Grid::new(grid.size(), false),
-            grid,
-
-            visit_filter: None,
-            discovery_handler: None,
-            visit_handler: None,
-        }
-    }
-
-    /// 设置访问过滤，可访问点返回true
-    pub fn with_visit_filter<F>(&mut self, filter: F) -> &mut Self
-    where
-        F: Fn(Point) -> bool + 'a,
-    {
-        self.visit_filter = Some(Box::new(filter));
-        self
-    }
-
-    pub fn skip_tiles(&mut self, tile: &'a T) -> &mut Self
-    where
-        T: PartialEq<T> + Clone,
-    {
-        self.visit_filter = Some(Box::new(|pt| self.grid.get(pt) != Some(tile)));
-        self
-    }
-
-    pub fn only_tiles(&mut self, tile: &'a T) -> &mut Self
-    where
-        T: PartialEq<T> + Clone,
-    {
-        self.visit_filter = Some(Box::new(|pt| self.grid.get(pt) == Some(tile)));
-        self
-    }
-
-    /// 发现节点时执行函数
-    pub fn on_discover<F>(&mut self, f: F) -> &mut Self
-    where
-        F: FnMut(Point, Point) + 'a,
-    {
-        self.discovery_handler = Some(Box::new(f));
-        self
-    }
-
-    /// 访问节点时执行函数
-    pub fn on_visit<F>(&mut self, f: F) -> &mut Self
-    where
-        F: FnMut(Point) + 'a,
-    {
-        self.visit_handler = Some(Box::new(f));
-        self
-    }
-
-    /// 无目标搜索，直到没有点可以访问
-    pub fn run(&mut self) {
-        while self.next().is_some() {}
-    }
-
-    /// 有目标搜索，直到目标点被找到，或者没有点可以访问
-    /// 返回是否找到目标点
-    pub fn run_with_target(&mut self, target: Point) -> bool {
-        while let Some(pt) = self.next() {
-            if pt == target {
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn is_discovered(&self, pt: Point) -> bool {
-        self.discovered.get(pt).copied().unwrap_or(false)
-    }
-
-    pub fn is_visited(&self, pt: Point) -> bool {
-        self.visited.get(pt).copied().unwrap_or(false)
-    }
-
-    pub fn next_val(&mut self) -> Option<&T> {
-        self.next().and_then(|pt| self.grid.get(pt))
-    }
-}
-
-impl<'a, T> Iterator for BfsIter<'a, T> {
-    type Item = Point;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(cur) = self.queue.pop_front() {
-            self.visited.set(cur, true);
-
-            self.visit_handler.as_mut().map(|f| f(cur));
-
-            for dir in DIRECTIONS {
-                let next = cur + dir;
-
-                if self.grid.get(next).is_none() {
-                    continue;
-                }
-
-                if self.is_discovered(next) || self.is_visited(next) {
-                    continue;
-                }
-
-                if self.visit_filter.as_ref().map(|f| f(next)) == Some(false) {
-                    continue;
-                }
-
-                self.discovered.set(next, true);
-
-                self.discovery_handler.as_mut().map(|f| f(cur, next));
-
-                self.queue.push_back(next);
-            }
-
-            return Some(cur);
-        }
-        None
-    }
-}
-
-/// 遍历所有点的迭代器，不借用 Grid
-pub struct GridPointIter {
-    row: isize,
-    col: isize,
-    size: (usize, usize),
-}
-
-impl GridPointIter {
-    pub fn new(size: (usize, usize)) -> Self {
-        GridPointIter {
-            row: 0,
-            col: -1,
-            size,
-        }
-    }
-}
-
-impl Iterator for GridPointIter {
-    type Item = Point;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.col += 1;
-        if self.col >= self.size.1 as isize {
-            self.col = 0;
-            self.row += 1;
-        }
-
-        if self.row >= self.size.0 as isize {
-            None
-        } else {
-            Some(Point::new(self.row, self.col))
         }
     }
 }
@@ -353,309 +236,6 @@ impl<T, I: Into<Point>> ops::IndexMut<I> for Grid<T> {
     fn index_mut(&mut self, pt: I) -> &mut Self::Output {
         let pt = pt.into();
         &mut self.inner[pt.i as usize][pt.j as usize]
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Point {
-    pub i: isize,
-    pub j: isize,
-}
-
-impl Point {
-    pub fn new(i: isize, j: isize) -> Self {
-        Point { i, j }
-    }
-
-    /// 从 (0,0) 遍历到 (self.i, self.j)，不包含边界
-    pub fn iter_to(self) -> GridPointIter {
-        GridPointIter::new((self.i as usize, self.j as usize))
-    }
-
-    pub fn move_to(self, direction: Direction) -> Point {
-        match direction {
-            Direction::Up => Point {
-                i: self.i - 1,
-                ..self
-            },
-            Direction::Down => Point {
-                i: self.i + 1,
-                ..self
-            },
-            Direction::Left => Point {
-                j: self.j - 1,
-                ..self
-            },
-            Direction::Right => Point {
-                j: self.j + 1,
-                ..self
-            },
-        }
-    }
-
-    #[inline]
-    pub fn move_left(self) -> Point {
-        self.move_to(Direction::Left)
-    }
-
-    #[inline]
-    pub fn move_right(self) -> Point {
-        self.move_to(Direction::Right)
-    }
-
-    #[inline]
-    pub fn move_up(self) -> Point {
-        self.move_to(Direction::Up)
-    }
-
-    #[inline]
-    pub fn move_down(self) -> Point {
-        self.move_to(Direction::Down)
-    }
-
-    pub fn get<T>(self, grid: &Vec<Vec<T>>) -> Option<&T> {
-        grid.get(self.i as usize)?.get(self.j as usize)
-    }
-
-    pub fn get_mut<T>(self, grid: &mut Vec<Vec<T>>) -> Option<&mut T> {
-        grid.get_mut(self.i as usize)?.get_mut(self.j as usize)
-    }
-
-    /// 超出界限时什么也不做
-    pub fn set<T>(self, grid: &mut Vec<Vec<T>>, value: T) {
-        self.get_mut(grid).map(|v| *v = value);
-    }
-
-    /// 8方向邻接点，不检查边界
-    pub fn adjacent(self) -> AdjacentIter<()> {
-        AdjacentIter::new(self, ())
-    }
-
-    /// 8方向邻接点，检查边界
-    pub fn adjacent_in(self, size: (usize, usize)) -> AdjacentIter<(usize, usize)> {
-        AdjacentIter::new(self, size)
-    }
-}
-
-/// 8方向邻接点迭代器，S 为 () 时不检查边界，为 (usize, usize) 时检查
-pub struct AdjacentIter<S> {
-    center: Point,
-    idx: i8,
-    bounds: S,
-}
-
-const ADJACENT_OFFSETS: [(isize, isize); 8] = [
-    (-1, -1),
-    (-1, 0),
-    (-1, 1),
-    (0, -1),
-    (0, 1),
-    (1, -1),
-    (1, 0),
-    (1, 1),
-];
-
-impl<S> AdjacentIter<S> {
-    fn new(center: Point, bounds: S) -> Self {
-        AdjacentIter {
-            center,
-            idx: 0,
-            bounds,
-        }
-    }
-}
-
-impl Iterator for AdjacentIter<()> {
-    type Item = Point;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.idx >= 8 {
-            return None;
-        }
-        let (di, dj) = ADJACENT_OFFSETS[self.idx as usize];
-        self.idx += 1;
-        Some(Point::new(self.center.i + di, self.center.j + dj))
-    }
-}
-
-impl Iterator for AdjacentIter<(usize, usize)> {
-    type Item = Point;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.idx < 8 {
-            let (di, dj) = ADJACENT_OFFSETS[self.idx as usize];
-            self.idx += 1;
-            let ni = self.center.i + di;
-            let nj = self.center.j + dj;
-            if ni >= 0 && nj >= 0 && (ni as usize) < self.bounds.0 && (nj as usize) < self.bounds.1
-            {
-                return Some(Point::new(ni, nj));
-            }
-        }
-        None
-    }
-}
-
-impl<T: IntegerExt> From<(T, T)> for Point {
-    fn from((x, y): (T, T)) -> Self {
-        Point {
-            i: x.as_isize(),
-            j: y.as_isize(),
-        }
-    }
-}
-
-impl ops::Add for Point {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Point {
-            i: self.i + rhs.i,
-            j: self.j + rhs.j,
-        }
-    }
-}
-
-impl ops::Add<Direction> for Point {
-    type Output = Self;
-
-    fn add(self, rhs: Direction) -> Self::Output {
-        self.move_to(rhs)
-    }
-}
-
-impl ops::Sub for Point {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Point {
-            i: self.i - rhs.i,
-            j: self.j - rhs.j,
-        }
-    }
-}
-
-impl ops::Sub<Direction> for Point {
-    type Output = Self;
-
-    fn sub(self, rhs: Direction) -> Self::Output {
-        self.move_to(rhs.turn_around())
-    }
-}
-
-impl ops::Mul for Point {
-    type Output = isize;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        self.i * rhs.j + self.j * rhs.i
-    }
-}
-
-impl<T: IntegerExt> ops::Mul<T> for Point {
-    type Output = Self;
-
-    fn mul(self, rhs: T) -> Self::Output {
-        Point {
-            i: self.i * rhs.as_isize(),
-            j: self.j * rhs.as_isize(),
-        }
-    }
-}
-
-pub const DIRECTIONS: [Direction; 4] = [
-    Direction::Up,
-    Direction::Down,
-    Direction::Left,
-    Direction::Right,
-];
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Direction {
-    pub fn all() -> Vec<Direction> {
-        DIRECTIONS.to_vec()
-    }
-
-    pub fn as_pt(self) -> Point {
-        match self {
-            Direction::Up => Point::new(-1, 0),
-            Direction::Down => Point::new(1, 0),
-            Direction::Left => Point::new(0, -1),
-            Direction::Right => Point::new(0, 1),
-        }
-    }
-
-    pub fn turn_left(self) -> Direction {
-        match self {
-            Direction::Up => Direction::Left,
-            Direction::Down => Direction::Right,
-            Direction::Left => Direction::Down,
-            Direction::Right => Direction::Up,
-        }
-    }
-
-    pub fn turn_right(self) -> Direction {
-        match self {
-            Direction::Up => Direction::Right,
-            Direction::Down => Direction::Left,
-            Direction::Left => Direction::Up,
-            Direction::Right => Direction::Down,
-        }
-    }
-
-    pub fn turn_around(self) -> Direction {
-        match self {
-            Direction::Up => Direction::Down,
-            Direction::Down => Direction::Up,
-            Direction::Left => Direction::Right,
-            Direction::Right => Direction::Left,
-        }
-    }
-
-    pub fn get<T>(self, v: &Vec<T>) -> Option<&T> {
-        match self {
-            Direction::Up => v.get(0),
-            Direction::Down => v.get(1),
-            Direction::Left => v.get(2),
-            Direction::Right => v.get(3),
-        }
-    }
-
-    pub fn set<T>(self, v: &mut Vec<T>, val: T) {
-        match self {
-            Direction::Up => v[0] = val,
-            Direction::Down => v[1] = val,
-            Direction::Left => v[2] = val,
-            Direction::Right => v[3] = val,
-        };
-    }
-}
-
-impl TryFrom<Point> for Direction {
-    type Error = ();
-
-    fn try_from(pt: Point) -> Result<Self, Self::Error> {
-        match (pt.i, pt.j) {
-            (i, 0) if i < 0 => Ok(Direction::Up),
-            (i, 0) if i > 0 => Ok(Direction::Down),
-            (0, j) if j < 0 => Ok(Direction::Left),
-            (0, j) if j > 0 => Ok(Direction::Right),
-            _ => Err(()),
-        }
-    }
-}
-
-impl ops::Mul<isize> for Direction {
-    type Output = Point;
-
-    fn mul(self, rhs: isize) -> Self::Output {
-        self.as_pt() * rhs
     }
 }
 
@@ -688,58 +268,27 @@ mod tests {
     }
 
     #[test]
-    fn test_point_from() {
-        let p = Point::from((1, 2));
-        assert_eq!(p.i, 1);
-        assert_eq!(p.j, 2);
-        let p2 = Point::from((0_i32, 0_i32));
-        assert_eq!(p2.i, 0);
-    }
+    fn test_grid_transform() {
+        let grid: Grid<u8> = "ab\ncd".into();
+        // a b
+        // c d
 
-    #[test]
-    fn test_point_mul() {
-        let p = Point::new(2, 3);
-        let p2 = p * 2;
-        assert_eq!(p2, Point::new(4, 6));
-        let p3 = p * 3_i64;
-        assert_eq!(p3, Point::new(6, 9));
-    }
+        // Rotate 90
+        // c a
+        // d b
+        let g90 = grid.rotate_cw();
+        assert_eq!(g90[Point::new(0, 0)], b'c');
+        assert_eq!(g90[Point::new(0, 1)], b'a');
+        assert_eq!(g90[Point::new(1, 0)], b'd');
+        assert_eq!(g90[Point::new(1, 1)], b'b');
 
-    #[test]
-    fn test_point_adjacent() {
-        let p = Point::new(5, 5);
-        let adj: Vec<_> = p.adjacent().collect();
-        assert_eq!(adj.len(), 8);
-    }
-
-    #[test]
-    fn test_point_adjacent_in() {
-        let p = Point::new(0, 0);
-        let adj: Vec<_> = p.adjacent_in((10, 10)).collect();
-        assert_eq!(adj.len(), 3); // only (0,1), (1,0), (1,1)
-    }
-
-    #[test]
-    fn test_grid_point_iter() {
-        let pts: Vec<_> = GridPointIter::new((2, 3)).collect();
-        assert_eq!(pts.len(), 6);
-        assert_eq!(pts[0], Point::new(0, 0));
-        assert_eq!(pts[5], Point::new(1, 2));
-    }
-
-    #[test]
-    fn test_direction() {
-        let p = Point::new(5, 5);
-        assert_eq!(p.move_up(), Point::new(4, 5));
-        assert_eq!(p.move_down(), Point::new(6, 5));
-        assert_eq!(p.move_left(), Point::new(5, 4));
-        assert_eq!(p.move_right(), Point::new(5, 6));
-    }
-
-    #[test]
-    fn test_direction_turn() {
-        assert_eq!(Direction::Up.turn_right(), Direction::Right);
-        assert_eq!(Direction::Right.turn_right(), Direction::Down);
-        assert_eq!(Direction::Up.turn_around(), Direction::Down);
+        // Flip H
+        // b a
+        // d c
+        let gfh = grid.flip_h();
+        assert_eq!(gfh[Point::new(0, 0)], b'b');
+        assert_eq!(gfh[Point::new(0, 1)], b'a');
+        assert_eq!(gfh[Point::new(1, 0)], b'd');
+        assert_eq!(gfh[Point::new(1, 1)], b'c');
     }
 }

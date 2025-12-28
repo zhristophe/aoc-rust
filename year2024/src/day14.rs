@@ -138,7 +138,7 @@ pub fn part2(idx: usize) -> String {
         }
     };
 
-    get_robot_map(&input, res).display_by_char(|&v| if v > 0 { '1' } else { '.' });
+    get_robot_map(&input, res).display_with(|&v| if v > 0 { '1' } else { '.' });
 
     res.to_string()
 }
