@@ -14,6 +14,7 @@ use tokio;
 
 pub mod ext_int;
 pub mod ext_u8_slice;
+pub mod graph;
 pub mod grid;
 pub mod name_pool;
 pub mod prelude;
