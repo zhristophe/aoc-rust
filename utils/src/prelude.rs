@@ -4,13 +4,13 @@ pub use regex::Regex;
 
 pub mod v1 {
     pub use crate::{
-        ext_int::IntegerExt,
-        ext_u8_slice::U8SliceExt,
+        bytes_ext::U8SliceExt,
         graph::Graph,
         grid::{DIRECTIONS, Direction, Grid, Point},
+        io::{clear_screen, download_input, read_input, wait_key},
         name_pool::NamePool,
-        read_input,
-        uf::UnionFind,
+        num_ext::IntegerExt,
+        union_find::UnionFind,
     };
 }
 

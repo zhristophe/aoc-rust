@@ -23,9 +23,9 @@ fn read(idx: usize) -> Vec<(i64, i64)> {
         .as_bytes()
         .split_by_byte(b',')
         .map(|r| {
-            let (a, b) = r.splite_once(b'-').unwrap();
-            let a = a.to_u64_unsafe() as i64;
-            let b = b.to_u64_unsafe() as i64;
+            let (a, b) = r.split_once_by_byte(b'-').unwrap();
+            let a = a.parse_u64_unsafe() as i64;
+            let b = b.parse_u64_unsafe() as i64;
 
             (a, b)
         })

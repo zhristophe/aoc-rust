@@ -24,7 +24,7 @@ L82
         .lines()
         .map(|s| {
             let s = s.as_bytes();
-            let d = s[1..].to_u32_unsafe() as i32;
+            let d = s[1..].parse_u32_unsafe() as i32;
             if s[0] == b'L' {
                 -d
             } else {

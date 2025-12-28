@@ -21,18 +21,18 @@ fn read(idx: usize) -> (Vec<(i64, i64)>, Vec<i64>) {
         .trim(),
     ][idx];
 
-    let (ranges, ids) = input.split_once("\n\n").unwrap();
+    let mut lines = input.lines();
+    let ranges = lines
+        .by_ref()
+        .take_while(|l| !l.is_empty())
+        .map(|line| {
+            let (a, b) = line.split_once('-').unwrap();
+            (a.parse().unwrap(), b.parse().unwrap())
+        })
+        .collect();
+    let ids = lines.map(|line| line.parse().unwrap()).collect();
 
-    (
-        ranges
-            .lines()
-            .map(|line| {
-                let (a, b) = line.split_once('-').unwrap();
-                (a.parse().unwrap(), b.parse().unwrap())
-            })
-            .collect(),
-        ids.lines().map(|line| line.parse().unwrap()).collect(),
-    )
+    (ranges, ids)
 }
 
 /// BTree缓存范围

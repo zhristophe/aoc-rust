@@ -1,7 +1,7 @@
 use core::{fmt, ops};
 use std::collections::VecDeque;
 
-use crate::ext_int::IntegerExt;
+use crate::num_ext::IntegerExt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grid<T> {
