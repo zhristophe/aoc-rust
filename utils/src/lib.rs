@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, fs, path::PathBuf, time::Duration};
+use std::{env, fs, path::PathBuf, time::Duration};
 
 use crossterm::{
     cursor,
@@ -15,6 +15,7 @@ use tokio;
 pub mod ext_int;
 pub mod ext_u8_slice;
 pub mod grid;
+pub mod name_pool;
 pub mod prelude;
 pub mod uf;
 
@@ -153,65 +154,6 @@ pub fn wait_key() -> Option<KeyCode> {
 pub fn clear_screen() {
     execute!(std::io::stdout(), terminal::Clear(ClearType::All)).unwrap();
     execute!(std::io::stdout(), cursor::MoveTo(0, 0)).unwrap();
-}
-
-#[derive(Debug)]
-pub struct NamePool {
-    map: HashMap<String, usize>,
-    pool: Vec<String>,
-}
-
-impl NamePool {
-    pub fn new() -> Self {
-        NamePool {
-            map: HashMap::new(),
-            pool: Vec::new(),
-        }
-    }
-
-    pub fn with_capacity(capacity: usize) -> Self {
-        NamePool {
-            map: HashMap::with_capacity(capacity),
-            pool: Vec::with_capacity(capacity),
-        }
-    }
-
-    pub fn id(&mut self, name: impl AsRef<str>) -> usize {
-        let name = name.as_ref().to_string();
-        self.map
-            .entry(name.clone())
-            .or_insert_with(|| {
-                let id = self.pool.len();
-                self.pool.push(name);
-                id
-            })
-            .clone()
-    }
-
-    pub fn get_id(&self, name: impl AsRef<str>) -> Option<usize> {
-        self.map.get(name.as_ref()).cloned()
-    }
-
-    pub fn name(&self, id: usize) -> Option<&str> {
-        self.pool.get(id).map(|s| s.as_str())
-    }
-
-    pub fn names(&self) -> impl Iterator<Item = &str> {
-        self.pool.iter().map(|s| s.as_str())
-    }
-
-    pub fn len(&self) -> usize {
-        self.pool.len()
-    }
-
-    pub fn contains(&self, name: impl AsRef<str>) -> bool {
-        self.map.contains_key(name.as_ref())
-    }
-
-    pub fn reserve(&mut self, n: usize) {
-        self.map.reserve(n);
-        self.pool.reserve(n);
-    }
 }
 
 #[cfg(test)]
