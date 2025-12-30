@@ -1,4 +1,5 @@
 pub mod bytes_ext;
+pub mod dlx;
 pub mod graph;
 pub mod grid;
 pub mod io;

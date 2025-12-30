@@ -5,6 +5,7 @@ pub use regex::Regex;
 pub mod v1 {
     pub use crate::{
         bytes_ext::U8SliceExt,
+        dlx::DlxSolver,
         graph::Graph,
         grid::{Direction, Grid, GridTransform, Point},
         io::{clear_screen, download_input, read_input, wait_key},
